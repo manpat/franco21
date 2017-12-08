@@ -92,18 +92,38 @@ impl Ease<f32> for f32 {
 
 
 	fn ease_elastic_in(&self, b: f32, e: f32) -> f32 {
-		let c = e-b;
-		unimplemented!();
+		panic!("ease_elastic_* are all bad, don't use pls")
+
+		// let c = e-b;
+		// let t = self.clamp(0.0, 1.0);
+
+		// let damp = 2f32.powf(10.0 * (t - 1.0));
+		// let osc = (7.0 * PI * t).sin();
+
+		// osc * damp * c + b
 	}
 
 	fn ease_elastic_out(&self, b: f32, e: f32) -> f32 {
-		let c = e-b;
-		unimplemented!();
+		panic!("ease_elastic_* are all bad, don't use pls")
+
+		// let c = e-b;
+		// let t = self.clamp(0.0, 1.0);
+
+		// let damp = 2f32.powf(-10.0 * t);
+		// let osc = (-7.0 * PI * (t + 1.0)).sin();
+
+		// (osc * damp + 1.0) * c + b
 	}
 
 	fn ease_elastic_inout(&self, b: f32, e: f32) -> f32 {
-		let c = e-b;
-		unimplemented!();
+		let mid = (b+e) / 2.0;
+		let t = self.clamp(0.0, 1.0) * 2.0;
+
+		if t < 1.0 {
+			t.ease_elastic_in(b, mid)
+		} else {
+			(t - 1.0).ease_elastic_out(mid, e)
+		}
 	}
 
 
@@ -122,23 +142,50 @@ impl Ease<f32> for f32 {
 	}
 
 	fn ease_back_inout(&self, b: f32, e: f32) -> f32 {
-		let c = e-b;
-		unimplemented!();
+		let mid = (b+e) / 2.0;
+		let t = self.clamp(0.0, 1.0) * 2.0;
+
+		if t < 1.0 {
+			t.ease_back_in(b, mid)
+		} else {
+			(t - 1.0).ease_back_out(mid, e)
+		}
 	}
 
 
 	fn ease_bounce_in(&self, b: f32, e: f32) -> f32 {
-		let c = e-b;
-		unimplemented!();
+		e - (1.0 - *self).ease_bounce_out(0.0, e-b)
 	}
 
 	fn ease_bounce_out(&self, b: f32, e: f32) -> f32 {
 		let c = e-b;
-		unimplemented!();
+		let t = self.clamp(0.0, 1.0);
+
+		let fact = 7.5625;
+
+		if t < 1.0/2.75 {
+			c*fact*t*t + b
+		} else if t < 2.0/2.75 {
+			let t = t - 1.5/2.75;
+			c*(fact*t*t + 0.75) + b
+		} else if t < 2.5/2.75 {
+			let t = t - 2.25/2.75;
+			c*(fact*t*t + 0.9375) + b
+		} else {
+			let t = t - 2.625/2.75;
+			c*(fact*t*t + 0.984375) + b
+		}
 	}
 
 	fn ease_bounce_inout(&self, b: f32, e: f32) -> f32 {
+		let t = self.clamp(0.0, 1.0) * 2.0;
 		let c = e-b;
-		unimplemented!();
+
+		if t < 1.0 {
+			t.ease_bounce_in(0.0, c) / 2.0 + b
+		} else {
+			let t = t - 1.0;
+			(c + t.ease_bounce_out(0.0, c)) / 2.0 + b
+		}
 	}
 }
