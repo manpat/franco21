@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub, Mul, Div, Neg};
 use easing::*;
+use rand::{Rand, Rng};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -96,11 +97,23 @@ impl Add for Vec2 {
 		Vec2::new(self.x + o.x, self.y + o.y)
 	}
 }
+impl Add<f32> for Vec2 {
+	type Output = Vec2;
+	fn add(self, o: f32) -> Vec2 {
+		Vec2::new(self.x + o, self.y + o)
+	}
+}
 
 impl Sub for Vec2 {
 	type Output = Vec2;
 	fn sub(self, o: Vec2) -> Vec2 {
 		Vec2::new(self.x - o.x, self.y - o.y)
+	}
+}
+impl Sub<f32> for Vec2 {
+	type Output = Vec2;
+	fn sub(self, o: f32) -> Vec2 {
+		Vec2::new(self.x - o, self.y - o)
 	}
 }
 
@@ -146,11 +159,23 @@ impl Add for Vec3 {
 		Vec3::new(self.x + o.x, self.y + o.y, self.z + o.z)
 	}
 }
+impl Add<f32> for Vec3 {
+	type Output = Vec3;
+	fn add(self, o: f32) -> Vec3 {
+		Vec3::new(self.x + o, self.y + o, self.z + o)
+	}
+}
 
 impl Sub for Vec3 {
 	type Output = Vec3;
 	fn sub(self, o: Vec3) -> Vec3 {
 		Vec3::new(self.x - o.x, self.y - o.y, self.z - o.z)
+	}
+}
+impl Sub<f32> for Vec3 {
+	type Output = Vec3;
+	fn sub(self, o: f32) -> Vec3 {
+		Vec3::new(self.x - o, self.y - o, self.z - o)
 	}
 }
 
@@ -296,4 +321,29 @@ impl Ease<Vec3> for f32 {
 	impl_ease_for_vec3!(ease_bounce_in);
 	impl_ease_for_vec3!(ease_bounce_out);
 	impl_ease_for_vec3!(ease_bounce_inout);
+}
+
+
+impl Rand for Vec2 {
+	fn rand<R: Rng>(rng: &mut R) -> Self {
+		Vec2::new(rng.gen(), rng.gen())
+	}
+}
+
+impl Rand for Vec3 {
+	fn rand<R: Rng>(rng: &mut R) -> Self {
+		Vec3::new(rng.gen(), rng.gen(), rng.gen())
+	}
+}
+
+impl Rand for Vec4 {
+	fn rand<R: Rng>(rng: &mut R) -> Self {
+		Vec4::new(rng.gen(), rng.gen(), rng.gen(), rng.gen())
+	}
+}
+
+impl Rand for Vec2i {
+	fn rand<R: Rng>(rng: &mut R) -> Self {
+		Vec2i::new(rng.gen(), rng.gen())
+	}
 }
