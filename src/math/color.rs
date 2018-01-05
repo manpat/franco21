@@ -15,9 +15,20 @@ impl Color {
 	pub fn rgba(r:f32, g:f32, b:f32, a:f32) -> Color {
 		Color {r,g,b,a}
 	}
-
 	pub fn rgb(r:f32, g:f32, b:f32) -> Color {
 		Color::rgba(r,g,b, 1.0)
+	}
+
+	pub fn rgba8(r:u8, g:u8, b:u8, a:u8) -> Color {
+		Color {
+			r: r as f32 / 255.0,
+			g: g as f32 / 255.0,
+			b: b as f32 / 255.0,
+			a: a as f32 / 255.0,
+		}
+	}
+	pub fn rgb8(r:u8, g:u8, b:u8) -> Color {
+		Color::rgba8(r,g,b, 255)
 	}
 
 	pub fn grey(v: f32) -> Color { Color::rgb(v, v, v) }
@@ -48,6 +59,20 @@ impl From<Vec3> for Color {
 }
 impl From<Vec4> for Color {
 	fn from(o: Vec4) -> Color { Color::rgba(o.x, o.y, o.z, o.w) }
+}
+
+impl From<(u8,u8,u8)> for Color {
+	fn from(o: (u8,u8,u8)) -> Color { Color::rgb8(o.0, o.1, o.2) }
+}
+impl From<(u8,u8,u8,u8)> for Color {
+	fn from(o: (u8,u8,u8,u8)) -> Color { Color::rgba8(o.0, o.1, o.2, o.3) }
+}
+
+impl From<Color> for Vec3 {
+	fn from(o: Color) -> Vec3 { o.to_vec3() }
+}
+impl From<Color> for Vec4 {
+	fn from(o: Color) -> Vec4 { o.to_vec4() }
 }
 
 macro_rules! impl_ease_for_color {
