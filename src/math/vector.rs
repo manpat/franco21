@@ -27,6 +27,7 @@ impl Vec2 {
 	pub fn to_x0z(self) -> Vec3 { Vec3::new(self.x, 0.0, self.y) }
 	pub fn to_vec2i(self) -> Vec2i { Vec2i::new(self.x as i32, self.y as i32) }
 	pub fn to_tuple(self) -> (f32,f32) { (self.x, self.y) }
+	pub fn to_angle(self) -> f32 { self.y.atan2(self.x) }
 	pub fn extend(self, z: f32) -> Vec3 { Vec3::new(self.x, self.y, z) }
 
 	pub fn length(self) -> f32 { self.dot(self).sqrt() }
