@@ -60,6 +60,16 @@ impl Mat4 {
 			0.0, 0.0, 0.0, 1.0,
 		])
 	}
+	pub fn zrot(ph: f32) -> Mat4 {
+		let (rx, ry) = (ph.cos(), ph.sin());
+
+		Mat4::new(&[
+			 rx, -ry, 0.0, 0.0,
+			 ry,  rx, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
+			0.0, 0.0, 0.0, 1.0,
+		])
+	}
 
 	pub fn transpose(&self) -> Mat4 {
 		let [a,b,c,d] = self.rows;
