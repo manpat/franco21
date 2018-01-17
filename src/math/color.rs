@@ -31,6 +31,37 @@ impl Color {
 		Color::rgba8(r,g,b, 255)
 	}
 
+	pub fn hsva(h: f32, s: f32, v: f32, a: f32) -> Color {
+		use easing::Clamp;
+
+		let mut h = h % 360.0;
+		let s = s.clamp(0.0, 1.0);
+		let v = v.clamp(0.0, 1.0);
+
+		if h < 0.0 { h += 360.0; }
+
+		let c = v * s;
+		let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+		let m = v - c;
+
+		let seg = (h / 60.0) as u32 % 6;
+		let (r,g,b) = match seg {
+			0 => (c, x, 0.0),
+			1 => (x, c, 0.0),
+			2 => (0.0, c, x),
+			3 => (0.0, x, c),
+			4 => (x, 0.0, c),
+			5 => (c, 0.0, x),
+			_ => return Color::black()
+		};
+
+		Color::rgba(r+m, g+m, b+m, a)
+	}
+
+	pub fn hsv(h: f32, s: f32, v: f32) -> Color {
+		Color::hsva(h,s,v, 1.0)
+	}
+
 	pub fn grey(v: f32) -> Color { Color::rgb(v, v, v) }
 	pub fn grey_a(v: f32, a: f32) -> Color { Color::rgba(v, v, v, a) }
 	pub fn white() -> Color { Color::grey(1.0) }
