@@ -12,14 +12,14 @@ pub struct Color {
 
 #[allow(dead_code)]
 impl Color {
-	pub fn rgba(r:f32, g:f32, b:f32, a:f32) -> Color {
+	pub const fn rgba(r:f32, g:f32, b:f32, a:f32) -> Color {
 		Color {r,g,b,a}
 	}
-	pub fn rgb(r:f32, g:f32, b:f32) -> Color {
+	pub const fn rgb(r:f32, g:f32, b:f32) -> Color {
 		Color::rgba(r,g,b, 1.0)
 	}
 
-	pub fn rgba8(r:u8, g:u8, b:u8, a:u8) -> Color {
+	pub const fn rgba8(r:u8, g:u8, b:u8, a:u8) -> Color {
 		Color {
 			r: r as f32 / 255.0,
 			g: g as f32 / 255.0,
@@ -27,18 +27,18 @@ impl Color {
 			a: a as f32 / 255.0,
 		}
 	}
-	pub fn rgb8(r:u8, g:u8, b:u8) -> Color {
+	pub const fn rgb8(r:u8, g:u8, b:u8) -> Color {
 		Color::rgba8(r,g,b, 255)
 	}
 
 	pub fn hsva(h: f32, s: f32, v: f32, a: f32) -> Color {
 		use easing::Clamp;
 
-		let mut h = h % 360.0;
+		let h = h % 360.0 - h.signum().min(0.0) * 360.0;
+		// if h < 0.0, add 360.0
+
 		let s = s.clamp(0.0, 1.0);
 		let v = v.clamp(0.0, 1.0);
-
-		if h < 0.0 { h += 360.0; }
 
 		let c = v * s;
 		let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -62,10 +62,10 @@ impl Color {
 		Color::hsva(h,s,v, 1.0)
 	}
 
-	pub fn grey(v: f32) -> Color { Color::rgb(v, v, v) }
-	pub fn grey_a(v: f32, a: f32) -> Color { Color::rgba(v, v, v, a) }
-	pub fn white() -> Color { Color::grey(1.0) }
-	pub fn black() -> Color { Color::grey(0.0) }
+	pub const fn grey(v: f32) -> Color { Color::rgb(v, v, v) }
+	pub const fn grey_a(v: f32, a: f32) -> Color { Color::rgba(v, v, v, a) }
+	pub const fn white() -> Color { Color::grey(1.0) }
+	pub const fn black() -> Color { Color::grey(0.0) }
 
 	pub fn to_byte_tuple(&self) -> (u8, u8, u8, u8) {
 		let Color{r,g,b,a} = *self;
