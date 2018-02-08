@@ -45,6 +45,7 @@ impl Vec3 {
 	pub fn from_y_angle(th: f32) -> Vec3 { Vec3::new(th.cos(), 0.0, th.sin()) }
 
 	pub fn to_tuple(&self) -> (f32,f32,f32) { (self.x, self.y, self.z) }
+	pub fn to_xy(self) -> Vec2 { Vec2::new(self.x, self.y) }
 	pub fn extend(&self, w: f32) -> Vec4 { Vec4::new(self.x, self.y, self.z, w) }
 
 	pub fn length(&self) -> f32 { self.dot(*self).sqrt() }
