@@ -155,77 +155,45 @@ bulk_impl_vector_ops!(Vec3, f32, x, y, z);
 bulk_impl_vector_ops!(Vec4, f32, x, y, z, w);
 bulk_impl_vector_ops!(Vec2i, i32, x, y);
 
-
-macro_rules! impl_ease_for_vec2 {
-	($func: ident) => (
-		fn $func(&self, start: Vec2, end: Vec2) -> Vec2 {
-			Vec2 {
-				x: self.$func(start.x, end.x),
-				y: self.$func(start.y, end.y),
+macro_rules! impl_ease_for_vec {
+	(fn $func: ident, $ty:ident, $($els:ident),+) => (
+		fn $func(&self, start: $ty, end: $ty) -> $ty {
+			$ty {
+				$($els: self.$func(start.$els, end.$els)),+
 			}
 		}
-	)
-}
+	);
 
-macro_rules! impl_ease_for_vec3 {
-	($func: ident) => (
-		fn $func(&self, start: Vec3, end: Vec3) -> Vec3 {
-			Vec3 {
-				x: self.$func(start.x, end.x),
-				y: self.$func(start.y, end.y),
-				z: self.$func(start.z, end.z),
-			}
+	($ty:ident, $($els:ident),+) => {
+		impl Ease<$ty> for f32 {
+			impl_ease_for_vec!(fn ease_linear, $ty, $($els),+);
+
+			impl_ease_for_vec!(fn ease_quad_in, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_quad_out, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_quad_inout, $ty, $($els),+);
+
+			impl_ease_for_vec!(fn ease_exp_in, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_exp_out, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_exp_inout, $ty, $($els),+);
+
+			impl_ease_for_vec!(fn ease_elastic_in, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_elastic_out, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_elastic_inout, $ty, $($els),+);
+
+			impl_ease_for_vec!(fn ease_back_in, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_back_out, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_back_inout, $ty, $($els),+);
+
+			impl_ease_for_vec!(fn ease_bounce_in, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_bounce_out, $ty, $($els),+);
+			impl_ease_for_vec!(fn ease_bounce_inout, $ty, $($els),+);
 		}
-	)
+	};
 }
 
-impl Ease<Vec2> for f32 {
-	impl_ease_for_vec2!(ease_linear);
-
-	impl_ease_for_vec2!(ease_quad_in);
-	impl_ease_for_vec2!(ease_quad_out);
-	impl_ease_for_vec2!(ease_quad_inout);
-
-	impl_ease_for_vec2!(ease_exp_in);
-	impl_ease_for_vec2!(ease_exp_out);
-	impl_ease_for_vec2!(ease_exp_inout);
-
-	impl_ease_for_vec2!(ease_elastic_in);
-	impl_ease_for_vec2!(ease_elastic_out);
-	impl_ease_for_vec2!(ease_elastic_inout);
-
-	impl_ease_for_vec2!(ease_back_in);
-	impl_ease_for_vec2!(ease_back_out);
-	impl_ease_for_vec2!(ease_back_inout);
-
-	impl_ease_for_vec2!(ease_bounce_in);
-	impl_ease_for_vec2!(ease_bounce_out);
-	impl_ease_for_vec2!(ease_bounce_inout);
-}
-
-impl Ease<Vec3> for f32 {
-	impl_ease_for_vec3!(ease_linear);
-
-	impl_ease_for_vec3!(ease_quad_in);
-	impl_ease_for_vec3!(ease_quad_out);
-	impl_ease_for_vec3!(ease_quad_inout);
-
-	impl_ease_for_vec3!(ease_exp_in);
-	impl_ease_for_vec3!(ease_exp_out);
-	impl_ease_for_vec3!(ease_exp_inout);
-
-	impl_ease_for_vec3!(ease_elastic_in);
-	impl_ease_for_vec3!(ease_elastic_out);
-	impl_ease_for_vec3!(ease_elastic_inout);
-
-	impl_ease_for_vec3!(ease_back_in);
-	impl_ease_for_vec3!(ease_back_out);
-	impl_ease_for_vec3!(ease_back_inout);
-
-	impl_ease_for_vec3!(ease_bounce_in);
-	impl_ease_for_vec3!(ease_bounce_out);
-	impl_ease_for_vec3!(ease_bounce_inout);
-}
+impl_ease_for_vec!(Vec2, x, y);
+impl_ease_for_vec!(Vec3, x, y, z);
+impl_ease_for_vec!(Vec4, x, y, z, w);
 
 
 impl Rand for Vec2 {
