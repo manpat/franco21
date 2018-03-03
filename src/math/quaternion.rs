@@ -46,7 +46,7 @@ impl Quat {
 			(*self * Vec3::new(0.0, 1.0, 0.0)).extend(0.0),
 			(*self * Vec3::new(0.0, 0.0, 1.0)).extend(0.0),
 			Vec4::new(0.0, 0.0, 0.0, 1.0)
-		])
+		]).transpose()
 	}
 }
 
