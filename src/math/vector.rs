@@ -1,4 +1,5 @@
 use std::ops::{Add, Sub, Mul, Div, Neg};
+use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
 use easing::*;
 use rand::{Rand, Rng};
 
@@ -92,166 +93,67 @@ impl Vec2i {
 	}
 }
 
+macro_rules! impl_vector_bin_op {
+	($ty:ident, $trait:ident<$scalar:ty>, $fn:ident, $op:tt, $($els:ident),+) => {
+		impl $trait for $ty {
+			type Output = $ty;
+			fn $fn(self, o: $ty) -> $ty {
+				$ty::new($(self.$els $op o.$els),+)
+			}
+		}
 
-impl Add for Vec2 {
-	type Output = Vec2;
-	fn add(self, o: Vec2) -> Vec2 {
-		Vec2::new(self.x + o.x, self.y + o.y)
-	}
-}
-impl Add<f32> for Vec2 {
-	type Output = Vec2;
-	fn add(self, o: f32) -> Vec2 {
-		Vec2::new(self.x + o, self.y + o)
-	}
-}
+		impl $trait<$scalar> for $ty {
+			type Output = $ty;
+			fn $fn(self, o: $scalar) -> $ty {
+				$ty::new($(self.$els $op o),+)
+			}
+		}
+	};
 
-impl Sub for Vec2 {
-	type Output = Vec2;
-	fn sub(self, o: Vec2) -> Vec2 {
-		Vec2::new(self.x - o.x, self.y - o.y)
-	}
-}
-impl Sub<f32> for Vec2 {
-	type Output = Vec2;
-	fn sub(self, o: f32) -> Vec2 {
-		Vec2::new(self.x - o, self.y - o)
-	}
-}
+	(ass $ty:ident, $trait:ident<$scalar:ty>, $fn:ident, $op:tt, $($els:ident),+) => {
+		impl $trait for $ty {
+			fn $fn(&mut self, o: $ty) {
+				$(
+					self.$els $op o.$els;
+				)+
+			}
+		}
 
-impl Neg for Vec2 {
-	type Output = Vec2;
-	fn neg(self) -> Vec2 {
-		Vec2::new(-self.x, -self.y)
-	}
-}
-
-impl Mul<Vec2> for Vec2 {
-	type Output = Vec2;
-	fn mul(self, o: Vec2) -> Vec2 {
-		Vec2::new(self.x * o.x, self.y * o.y)
-	}
+		impl $trait<$scalar> for $ty {
+			fn $fn(&mut self, o: $scalar) {
+				$(
+					self.$els $op o;
+				)+
+			}
+		}
+	};
 }
 
-impl Div<Vec2> for Vec2 {
-	type Output = Vec2;
-	fn div(self, o: Vec2) -> Vec2 {
-		Vec2::new(self.x / o.x, self.y / o.y)
-	}
+macro_rules! bulk_impl_vector_ops {
+	($ty:ident, $scalar:ty, $($els:ident),+) => {
+		impl_vector_bin_op!($ty, Add<$scalar>, add, +, $($els),+);
+		impl_vector_bin_op!($ty, Sub<$scalar>, sub, -, $($els),+);
+		impl_vector_bin_op!($ty, Mul<$scalar>, mul, *, $($els),+);
+		impl_vector_bin_op!($ty, Div<$scalar>, div, /, $($els),+);
+
+		impl_vector_bin_op!(ass $ty, AddAssign<$scalar>, add_assign, +=, $($els),+);
+		impl_vector_bin_op!(ass $ty, SubAssign<$scalar>, sub_assign, -=, $($els),+);
+		impl_vector_bin_op!(ass $ty, MulAssign<$scalar>, mul_assign, *=, $($els),+);
+		impl_vector_bin_op!(ass $ty, DivAssign<$scalar>, div_assign, /=, $($els),+);
+
+		impl Neg for $ty {
+			type Output = $ty;
+			fn neg(self) -> $ty {
+				$ty::new($(-self.$els),+)
+			}
+		}
+	};
 }
 
-impl Mul<f32> for Vec2 {
-	type Output = Vec2;
-	fn mul(self, o: f32) -> Vec2 {
-		Vec2::new(self.x * o, self.y * o)
-	}
-}
-
-impl Div<f32> for Vec2 {
-	type Output = Vec2;
-	fn div(self, o: f32) -> Vec2 {
-		Vec2::new(self.x / o, self.y / o)
-	}
-}
-
-
-impl Add for Vec3 {
-	type Output = Vec3;
-	fn add(self, o: Vec3) -> Vec3 {
-		Vec3::new(self.x + o.x, self.y + o.y, self.z + o.z)
-	}
-}
-impl Add<f32> for Vec3 {
-	type Output = Vec3;
-	fn add(self, o: f32) -> Vec3 {
-		Vec3::new(self.x + o, self.y + o, self.z + o)
-	}
-}
-
-impl Sub for Vec3 {
-	type Output = Vec3;
-	fn sub(self, o: Vec3) -> Vec3 {
-		Vec3::new(self.x - o.x, self.y - o.y, self.z - o.z)
-	}
-}
-impl Sub<f32> for Vec3 {
-	type Output = Vec3;
-	fn sub(self, o: f32) -> Vec3 {
-		Vec3::new(self.x - o, self.y - o, self.z - o)
-	}
-}
-
-impl Neg for Vec3 {
-	type Output = Vec3;
-	fn neg(self) -> Vec3 {
-		Vec3::new(-self.x, -self.y, -self.z)
-	}
-}
-
-impl Mul<Vec3> for Vec3 {
-	type Output = Vec3;
-	fn mul(self, o: Vec3) -> Vec3 {
-		Vec3::new(self.x * o.x, self.y * o.y, self.z * o.z)
-	}
-}
-
-impl Div<Vec3> for Vec3 {
-	type Output = Vec3;
-	fn div(self, o: Vec3) -> Vec3 {
-		Vec3::new(self.x / o.x, self.y / o.y, self.z / o.z)
-	}
-}
-
-impl Mul<f32> for Vec3 {
-	type Output = Vec3;
-	fn mul(self, o: f32) -> Vec3 {
-		Vec3::new(self.x * o, self.y * o, self.z * o)
-	}
-}
-
-impl Div<f32> for Vec3 {
-	type Output = Vec3;
-	fn div(self, o: f32) -> Vec3 {
-		Vec3::new(self.x / o, self.y / o, self.z / o)
-	}
-}
-
-
-impl Mul<Vec4> for Vec4 {
-	type Output = Vec4;
-	fn mul(self, o: Vec4) -> Vec4 {
-		Vec4::new(self.x * o.x, self.y * o.y, self.z * o.z, self.w * o.w)
-	}
-}
-
-impl Mul<f32> for Vec4 {
-	type Output = Vec4;
-	fn mul(self, o: f32) -> Vec4 {
-		Vec4::new(self.x * o, self.y * o, self.z * o, self.w * o)
-	}
-}
-
-
-impl Add for Vec2i {
-	type Output = Vec2i;
-	fn add(self, o: Vec2i) -> Vec2i {
-		Vec2i::new(self.x + o.x, self.y + o.y)
-	}
-}
-
-impl Sub for Vec2i {
-	type Output = Vec2i;
-	fn sub(self, o: Vec2i) -> Vec2i {
-		Vec2i::new(self.x - o.x, self.y - o.y)
-	}
-}
-
-impl Neg for Vec2i {
-	type Output = Vec2i;
-	fn neg(self) -> Vec2i {
-		Vec2i::new(-self.x, -self.y)
-	}
-}
+bulk_impl_vector_ops!(Vec2, f32, x, y);
+bulk_impl_vector_ops!(Vec3, f32, x, y, z);
+bulk_impl_vector_ops!(Vec4, f32, x, y, z, w);
+bulk_impl_vector_ops!(Vec2i, i32, x, y);
 
 
 macro_rules! impl_ease_for_vec2 {
