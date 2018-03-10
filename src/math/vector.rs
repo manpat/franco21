@@ -25,6 +25,9 @@ impl Vec2 {
 	pub const fn zero() -> Vec2 { Vec2::splat(0.0) }
 	pub fn from_angle(th: f32) -> Vec2 { Vec2::new(th.cos(), th.sin()) }
 
+	pub const fn from_x(x: f32) -> Vec2 { Vec2::new(x, 0.0) }
+	pub const fn from_y(y: f32) -> Vec2 { Vec2::new(0.0, y) }
+
 	pub fn to_x0z(self) -> Vec3 { Vec3::new(self.x, 0.0, self.y) }
 	pub fn to_vec2i(self) -> Vec2i { Vec2i::new(self.x as i32, self.y as i32) }
 	pub fn to_tuple(self) -> (f32,f32) { (self.x, self.y) }
@@ -44,6 +47,10 @@ impl Vec3 {
 	pub const fn zero() -> Vec3 { Vec3::splat(0.0) }
 	pub fn from_x_angle(th: f32) -> Vec3 { Vec3::new(0.0, th.sin(), th.cos()) }
 	pub fn from_y_angle(th: f32) -> Vec3 { Vec3::new(th.cos(), 0.0, th.sin()) }
+
+	pub const fn from_x(x: f32) -> Vec3 { Vec3::new(x, 0.0, 0.0) }
+	pub const fn from_y(y: f32) -> Vec3 { Vec3::new(0.0, y, 0.0) }
+	pub const fn from_z(z: f32) -> Vec3 { Vec3::new(0.0, 0.0, z) }
 
 	pub fn to_tuple(&self) -> (f32,f32,f32) { (self.x, self.y, self.z) }
 	pub fn to_xy(self) -> Vec2 { Vec2::new(self.x, self.y) }
@@ -70,6 +77,11 @@ impl Vec4 {
 		assert!(o.len() >= 4);
 		Vec4::new(o[0], o[1], o[2], o[3])
 	}
+
+	pub const fn from_x(x: f32) -> Vec4 { Vec4::new(x, 0.0, 0.0, 0.0) }
+	pub const fn from_y(y: f32) -> Vec4 { Vec4::new(0.0, y, 0.0, 0.0) }
+	pub const fn from_z(z: f32) -> Vec4 { Vec4::new(0.0, 0.0, z, 0.0) }
+	pub const fn from_w(w: f32) -> Vec4 { Vec4::new(0.0, 0.0, 0.0, w) }
 
 	pub fn to_tuple(&self) -> (f32,f32,f32,f32) { (self.x, self.y, self.z, self.w) }
 	pub fn to_vec3(&self) -> Vec3 { Vec3::new(self.x, self.y, self.z) }

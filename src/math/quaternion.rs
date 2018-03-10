@@ -7,7 +7,7 @@ use easing::*;
 pub struct Quat{pub x: f32, pub y: f32, pub z: f32, pub w: f32}
 
 impl Quat {
-	pub fn from_raw(x: f32, y: f32, z: f32, w: f32) -> Quat {
+	pub const fn from_raw(x: f32, y: f32, z: f32, w: f32) -> Quat {
 		Quat{x,y,z,w}
 	}
 
@@ -22,6 +22,10 @@ impl Quat {
 			angle.cos()
 		)
 	}
+
+	pub fn forward(&self) -> Vec3 { *self * Vec3::from_z(-1.0) }
+	pub fn right(&self) -> Vec3 { *self * Vec3::from_x(1.0) }
+	pub fn up(&self) -> Vec3 { *self * Vec3::from_y(1.0) }
 
 	pub fn imaginary(&self) -> Vec3 {
 		Vec3::new(self.x, self.y, self.z)
