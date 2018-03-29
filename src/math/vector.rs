@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub, Mul, Div, Neg};
 use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
+use std::iter::{Sum, Product};
 use easing::*;
 use rand::{Rand, Rng};
 
@@ -157,6 +158,30 @@ macro_rules! bulk_impl_vector_ops {
 			type Output = $ty;
 			fn neg(self) -> $ty {
 				$ty::new($(-self.$els),+)
+			}
+		}
+
+		impl Sum for $ty {
+			fn sum<I>(iter: I) -> $ty where I: Iterator<Item=$ty> {
+				iter.fold($ty::zero(), |a, v| a + v)
+			}
+		}
+		
+		impl<'a> Sum<&'a $ty> for $ty {
+			fn sum<I>(iter: I) -> $ty where I: Iterator<Item=&'a $ty> {
+				iter.fold($ty::zero(), |a, &v| a + v)
+			}
+		}
+
+		impl Product for $ty {
+			fn product<I>(iter: I) -> $ty where I: Iterator<Item=$ty> {
+				iter.fold($ty::splat(1 as $scalar), |a, v| a * v)
+			}
+		}
+
+		impl<'a> Product<&'a $ty> for $ty {
+			fn product<I>(iter: I) -> $ty where I: Iterator<Item=&'a $ty> {
+				iter.fold($ty::splat(1 as $scalar), |a, &v| a * v)
 			}
 		}
 	};

@@ -11,6 +11,10 @@ impl Quat {
 		Quat{x,y,z,w}
 	}
 
+	pub const fn ident() -> Quat {
+		Quat::from_raw(0.0, 0.0, 0.0, 1.0)
+	}
+
 	pub fn new(axis: Vec3, angle: f32) -> Quat {
 		let angle = angle / 2.0;
 		let s = angle.sin();
