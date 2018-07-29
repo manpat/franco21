@@ -3,7 +3,6 @@
 #![feature(ord_max_min)]
 #![feature(slice_patterns)]
 #![feature(specialization)]
-#![feature(inclusive_range_syntax)]
 #![feature(generators, generator_trait)]
 
 pub extern crate rand;
