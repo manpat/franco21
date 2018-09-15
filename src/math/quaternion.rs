@@ -48,6 +48,11 @@ impl Quat {
 		Quat::from_raw(-self.x, -self.y, -self.z, self.w)
 	}
 
+	pub fn scale(&self, f: f32) -> Quat {
+		// TODO: improve
+		(*self * f + Quat::ident() * (1.0 - f)).normalize()
+	}
+
 	pub fn to_mat4(&self) -> Mat4 {
 		Mat4::from_rows([
 			(*self * Vec3::new(1.0, 0.0, 0.0)).extend(0.0),
