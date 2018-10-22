@@ -25,6 +25,10 @@ impl Vec2 {
 	pub const fn splat(x: f32) -> Vec2 { Vec2::new(x, x) }
 	pub const fn zero() -> Vec2 { Vec2::splat(0.0) }
 	pub fn from_angle(th: f32) -> Vec2 { Vec2::new(th.cos(), th.sin()) }
+	pub fn from_slice(o: &[f32]) -> Vec2 {
+		assert!(o.len() >= 2);
+		Vec2::new(o[0], o[1])
+	}
 
 	pub const fn from_x(x: f32) -> Vec2 { Vec2::new(x, 0.0) }
 	pub const fn from_y(y: f32) -> Vec2 { Vec2::new(0.0, y) }
@@ -32,6 +36,7 @@ impl Vec2 {
 	pub fn to_x0z(self) -> Vec3 { Vec3::new(self.x, 0.0, self.y) }
 	pub fn to_vec2i(self) -> Vec2i { Vec2i::new(self.x as i32, self.y as i32) }
 	pub fn to_tuple(self) -> (f32,f32) { (self.x, self.y) }
+	pub fn to_array(self) -> [f32; 2] { [self.x, self.y] }
 	pub fn to_angle(self) -> f32 { self.y.atan2(self.x) }
 	pub fn extend(self, z: f32) -> Vec3 { Vec3::new(self.x, self.y, z) }
 
@@ -48,6 +53,10 @@ impl Vec3 {
 	pub const fn zero() -> Vec3 { Vec3::splat(0.0) }
 	pub fn from_x_angle(th: f32) -> Vec3 { Vec3::new(0.0, th.sin(), th.cos()) }
 	pub fn from_y_angle(th: f32) -> Vec3 { Vec3::new(th.cos(), 0.0, th.sin()) }
+	pub fn from_slice(o: &[f32]) -> Vec3 {
+		assert!(o.len() >= 3);
+		Vec3::new(o[0], o[1], o[2])
+	}
 
 	pub const fn from_x(x: f32) -> Vec3 { Vec3::new(x, 0.0, 0.0) }
 	pub const fn from_y(y: f32) -> Vec3 { Vec3::new(0.0, y, 0.0) }
