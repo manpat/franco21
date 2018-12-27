@@ -82,6 +82,23 @@ impl Mat4 {
 		])
 	}
 
+	pub fn column_x(&self) -> Vec4 {
+		let [a,b,c,d] = self.rows;
+		Vec4::new(a.x, b.x, c.x, d.x)
+	}
+	pub fn column_y(&self) -> Vec4 {
+		let [a,b,c,d] = self.rows;
+		Vec4::new(a.y, b.y, c.y, d.y)
+	}
+	pub fn column_z(&self) -> Vec4 {
+		let [a,b,c,d] = self.rows;
+		Vec4::new(a.z, b.z, c.z, d.z)
+	}
+	pub fn column_w(&self) -> Vec4 {
+		let [a,b,c,d] = self.rows;
+		Vec4::new(a.w, b.w, c.w, d.w)
+	}
+
 	pub fn frustum(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Mat4 {
 		let xco = 2.0 * n / (r - l);
 		let yco = 2.0 * n / (t - b);

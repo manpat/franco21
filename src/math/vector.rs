@@ -19,6 +19,9 @@ pub struct Vec4{pub x: f32, pub y: f32, pub z: f32, pub w: f32}
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Vec2i{pub x: i32, pub y: i32}
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Vec3i{pub x: i32, pub y: i32, pub z: i32}
+
 
 impl Vec2 {
 	pub const fn new(x: f32, y: f32) -> Vec2 { Vec2{x, y} }
@@ -115,6 +118,20 @@ impl Vec2i {
 	}
 }
 
+impl Vec3i {
+	pub const fn new(x: i32, y: i32, z: i32) -> Vec3i { Vec3i{x, y, z} }
+	pub const fn splat(x: i32) -> Vec3i { Vec3i::new(x, x, x) }
+	pub const fn zero() -> Vec3i { Vec3i::splat(0) }
+
+	pub fn from_tuple(t: (i32,i32,i32)) -> Vec3i { Vec3i::new(t.0, t.1, t.2) }
+	pub fn to_tuple(self) -> (i32,i32,i32) { (self.x, self.y, self.z) }
+	pub fn to_vec3(self) -> Vec3 { Vec3::new(self.x as f32, self.y as f32, self.z as f32) }
+
+	pub fn length(self) -> f32 {
+		((self.x*self.x + self.y*self.y + self.z*self.z) as f32).sqrt()
+	}
+}
+
 #[macro_export]
 macro_rules! internal_vec_map {
 	(@apply ($v:expr, $el:tt), @[$($body:tt)*] element $($tail:tt)* ) => {
@@ -161,6 +178,15 @@ macro_rules! internal_vec_map {
 		}
 	}};
 
+	(Vec3i $v:expr, $($func:tt)+) => {{
+		let v = $v;
+		Vec2i {
+			x: internal_vec_map!(@apply (v, x), @[] $($func)+),
+			y: internal_vec_map!(@apply (v, y), @[] $($func)+),
+			z: internal_vec_map!(@apply (v, z), @[] $($func)+),
+		}
+	}};
+
 	(Vec3 $v:expr, $($func:tt)+) => {{
 		let v = $v;
 		Vec3 {
@@ -186,6 +212,9 @@ macro_rules! vec2_map { ($($tt:tt)+) => { internal_vec_map!(Vec2 $($tt)+) } }
 
 #[macro_export]
 macro_rules! vec2i_map { ($($tt:tt)+) => { internal_vec_map!(Vec2i $($tt)+) } }
+
+#[macro_export]
+macro_rules! vec3i_map { ($($tt:tt)+) => { internal_vec_map!(Vec3i $($tt)+) } }
 
 #[macro_export]
 macro_rules! vec3_map { ($($tt:tt)+) => { internal_vec_map!(Vec3 $($tt)+) } }
@@ -278,6 +307,7 @@ bulk_impl_vector_ops!(Vec2, f32, x, y);
 bulk_impl_vector_ops!(Vec3, f32, x, y, z);
 bulk_impl_vector_ops!(Vec4, f32, x, y, z, w);
 bulk_impl_vector_ops!(Vec2i, i32, x, y);
+bulk_impl_vector_ops!(Vec3i, i32, x, y, z);
 
 macro_rules! impl_ease_for_vec {
 	(fn $func: ident, $ty:ident, $($els:ident),+) => (
@@ -341,5 +371,11 @@ impl Rand for Vec4 {
 impl Rand for Vec2i {
 	fn rand<R: Rng>(rng: &mut R) -> Self {
 		Vec2i::new(rng.gen(), rng.gen())
+	}
+}
+
+impl Rand for Vec3i {
+	fn rand<R: Rng>(rng: &mut R) -> Self {
+		Vec3i::new(rng.gen(), rng.gen(), rng.gen())
 	}
 }
