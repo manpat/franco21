@@ -1,6 +1,5 @@
 #![feature(const_fn)]
 #![feature(box_syntax)]
-#![feature(ord_max_min)]
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(generators, generator_trait)]
