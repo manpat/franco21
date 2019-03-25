@@ -32,13 +32,13 @@ impl Color {
 	}
 
 	pub fn hsva(h: f32, s: f32, v: f32, a: f32) -> Color {
-		use easing::Clamp;
+		use crate::easing::Clamp;
 
 		let h = h % 360.0 - h.signum().min(0.0) * 360.0;
 		// if h < 0.0, add 360.0
 
-		let s = s.clamp(0.0, 1.0);
-		let v = v.clamp(0.0, 1.0);
+		let s = Clamp::clamp(&s, 0.0, 1.0);
+		let v = Clamp::clamp(&v, 0.0, 1.0);
 
 		let c = v * s;
 		let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -70,6 +70,11 @@ impl Color {
 	pub fn to_byte_tuple(&self) -> (u8, u8, u8, u8) {
 		let Color{r,g,b,a} = *self;
 		((r*255.0) as u8, (g*255.0) as u8, (b*255.0) as u8, (a*255.0) as u8)
+	}
+
+	pub fn to_tuple(&self) -> (f32, f32, f32, f32) {
+		let Color{r,g,b,a} = *self;
+		(r,g,b,a)
 	}
 
 	pub fn to_vec3(&self) -> Vec3 { Vec3::new(self.r, self.g, self.b) }
