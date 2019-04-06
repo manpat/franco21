@@ -121,12 +121,12 @@ impl Mat4 {
 		let scale = (fov / 2.0).tan() * n;
 
 		// maintain at least 1x1 safe region in portrait
-		let (r, t) = if self.aspect > 1.0 {
-			(scale * self.aspect, scale)
+		let (r, t) = if aspect > 1.0 {
+			(scale * aspect, scale)
 		} else {
-			(scale, scale / self.aspect)
+			(scale, scale / aspect)
 		};
-		
+
 		Mat4::frustum(-r, r,-t, t, n, f)
 	}
 
