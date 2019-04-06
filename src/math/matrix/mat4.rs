@@ -119,8 +119,14 @@ impl Mat4 {
 
 	pub fn perspective(fov: f32, aspect: f32, n: f32, f: f32) -> Mat4 {
 		let scale = (fov / 2.0).tan() * n;
-		let r = aspect * scale;
-		let t = scale;
+
+		// maintain at least 1x1 safe region in portrait
+		let (r, t) = if self.aspect > 1.0 {
+			(scale * self.aspect, scale)
+		} else {
+			(scale, scale / self.aspect)
+		};
+		
 		Mat4::frustum(-r, r,-t, t, n, f)
 	}
 
