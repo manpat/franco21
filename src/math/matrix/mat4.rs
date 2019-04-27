@@ -117,6 +117,23 @@ impl Mat4 {
 		])
 	}
 
+	pub fn ortho(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Mat4 {
+		let xsc = 2.0 / (r - l);
+		let ysc = 2.0 / (t - b);
+		let zsc =-2.0 / (f - n);
+
+		let xtr = -(r + l) / (r - l);
+		let ytr = -(t + b) / (t - b);
+		let ztr = -(f + n) / (f - n);
+
+		Mat4::new(&[
+			xsc, 0.0, 0.0, xtr,
+			0.0, ysc, 0.0, ytr,
+			0.0, 0.0, zsc, ztr,
+			0.0, 0.0, 0.0, 1.0,
+		])
+	}
+
 	pub fn perspective(fov: f32, aspect: f32, n: f32, f: f32) -> Mat4 {
 		let scale = (fov / 2.0).tan() * n;
 
@@ -128,6 +145,17 @@ impl Mat4 {
 		};
 
 		Mat4::frustum(-r, r,-t, t, n, f)
+	}
+
+	pub fn ortho_aspect(scale: f32, aspect: f32, n: f32, f: f32) -> Mat4 {
+		// maintain at least 1x1 safe region in portrait
+		let (r, t) = if aspect > 1.0 {
+			(scale * aspect, scale)
+		} else {
+			(scale, scale / aspect)
+		};
+
+		Mat4::ortho(-r, r,-t, t, n, f)
 	}
 
 	pub fn determinant(&self) -> f32 {
