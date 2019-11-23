@@ -181,7 +181,7 @@ macro_rules! internal_vec_map {
 
 	(Vec3i $v:expr, $($func:tt)+) => {{
 		let v = $v;
-		Vec2i {
+		Vec3i {
 			x: internal_vec_map!(@apply (v, x), @[] $($func)+),
 			y: internal_vec_map!(@apply (v, y), @[] $($func)+),
 			z: internal_vec_map!(@apply (v, z), @[] $($func)+),
