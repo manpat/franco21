@@ -27,7 +27,7 @@ impl<Y> Iterator for Coro<Y> {
 	default fn next(&mut self) -> Option<Self::Item> {
 		if !self.valid { return None }
 
-		if let GeneratorState::Yielded(yielded_value) = Pin::new(&mut self.coro).resume() {
+		if let GeneratorState::Yielded(yielded_value) = Pin::new(&mut self.coro).resume(()) {
 			Some(yielded_value)
 		} else {
 			self.valid = false;
@@ -40,7 +40,7 @@ impl<Y: Clone> Iterator for Coro<Y> {
 	fn next(&mut self) -> Option<Self::Item> {
 		if !self.valid { return None }
 
-		if let GeneratorState::Yielded(yielded_value) = Pin::new(&mut self.coro).resume() {
+		if let GeneratorState::Yielded(yielded_value) = Pin::new(&mut self.coro).resume(()) {
 			self.value = Some(yielded_value);
 			self.value.clone()
 		} else {
