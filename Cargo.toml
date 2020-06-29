@@ -1,0 +1,9 @@
+[package]
+name = "toy"
+version = "0.1.0"
+authors = ["Patrick Monaghan <0x5f.manpat@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+common = { git = "https://github.com/manpat/common-rs.git" }
+failure = "0.1.1"
