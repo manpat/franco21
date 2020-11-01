@@ -27,20 +27,27 @@ pub struct EntityData {
 #[derive(Debug, Clone)]
 pub struct MeshData {
 	pub positions: Vec<Vec3>,
-	pub indices: MeshIndices,
+	pub indices: Vec<u16>,
 	pub color_data: Vec<MeshColorData>,
-}
-
-#[derive(Debug, Clone)]
-pub enum MeshIndices {
-	U8(Vec<u8>),
-	U16(Vec<u16>),
+	pub weight_data: Option<MeshWeightData>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MeshColorData {
 	pub name: String,
 	pub data: Vec<Vec4>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MeshWeightData {
+	pub bone_names: Vec<String>,
+	pub weights: Vec<MeshWeightVertex>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct MeshWeightVertex {
+	pub indices: [u8; 3],
+	pub weights: [f32; 3],
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -67,6 +74,11 @@ impl Project {
 			.find(|e| e.name == name)
 			.map(|entity| EntityRef::from(self, entity))
 	}
+
+	pub fn entities(&self) -> impl Iterator<Item=EntityRef<'_>> {
+		self.entities.iter()
+			.map(move |entity| EntityRef::from(self, entity))
+	}
 }
 
 impl MeshData {
@@ -76,20 +88,20 @@ impl MeshData {
 	}
 }
 
-impl SceneRef<'_> {
-	pub fn from<'t>(file: &'t Project, scene: &'t SceneData) -> SceneRef<'t> {
+impl<'t> SceneRef<'t> {
+	pub fn from(file: &'t Project, scene: &'t SceneData) -> SceneRef<'t> {
 		SceneRef { file, scene }
 	}
 
-	pub fn entities(&self) -> impl Iterator<Item=EntityRef<'_>> {
-		let file = &self.file;
+	pub fn entities(&self) -> impl Iterator<Item=EntityRef<'t>> {
+		let file = self.file;
 
 		self.scene.entities.iter()
 			.map(move |&id| &file.entities[id as usize - 1])
 			.map(move |entity| EntityRef::from(file, entity))
 	}
 
-	pub fn find_entity(&self, name: &str) -> Option<EntityRef<'_>> {
+	pub fn find_entity(&self, name: &str) -> Option<EntityRef<'t>> {
 		self.entities().find(|ent| ent.entity.name == name)
 	}
 }
@@ -99,12 +111,12 @@ impl Deref for SceneRef<'_> {
 	fn deref(&self) -> &Self::Target { self.scene }
 }
 
-impl EntityRef<'_> {
-	pub fn from<'t>(file: &'t Project, entity: &'t EntityData) -> EntityRef<'t> {
+impl<'t> EntityRef<'t> {
+	pub fn from(file: &'t Project, entity: &'t EntityData) -> EntityRef<'t> {
 		EntityRef { file, entity }
 	}
 
-	pub fn mesh_data(&self) -> Option<&MeshData> {
+	pub fn mesh_data(&self) -> Option<&'t MeshData> {
 		let mesh_id = self.entity.mesh_id;
 
 		if mesh_id == 0 {

@@ -1,14 +1,21 @@
 bl_info = {
-	"name": "Toy Scene Utils",
+	"name": "Toy Scene format",
 	"author": "Patrick Monaghan",
 	"description": "Exports scenes in a format that wasm-toys can eat",
-	"category": "Development",
+	"category": "Import-Export",
 	"version": (0, 0, 1),
 	"blender": (2, 80, 0),
 }
 
-import bpy
-from . import exporter
+# ugh
+if "bpy" in locals():
+	import imp
+	imp.reload(exporter)
+	imp.reload(serializer)
+else:
+	import bpy
+	from . import exporter, serializer
+
 
 # Register and add to the file selector
 def register():

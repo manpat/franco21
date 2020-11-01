@@ -5,7 +5,7 @@ use std::convert::TryInto;
 use common::*;
 use failure::{ensure, bail, format_err};
 
-const SCENE_VERSION: u8 = 2;
+const SCENE_VERSION: u8 = 3;
 
 pub fn load(data: &[u8]) -> ToyResult<Project> {
 	let reader = ToyReader { buf: data };
@@ -77,21 +77,17 @@ impl<'d> ToyReader<'d> {
 
 		let num_triangles = self.read_u16()? as usize;
 		let num_indices = num_triangles * 3;
-		let indices;
+		let mut indices = Vec::with_capacity(num_indices);
 
 		if wide_indices {
-			let mut indices_buf = Vec::with_capacity(num_indices);
 			for _ in 0..num_indices {
-				indices_buf.push(self.read_u16()?);
+				indices.push(self.read_u16()?);
 			}
-			indices = MeshIndices::U16(indices_buf);
 
 		} else {
-			let mut indices_buf = Vec::with_capacity(num_indices);
 			for _ in 0..num_indices {
-				indices_buf.push(self.read_u8()?);
+				indices.push(self.read_u8()? as u16);
 			}
-			indices = MeshIndices::U8(indices_buf);
 		}
 
 		let num_color_layers = self.read_u8()? as usize;
@@ -114,10 +110,60 @@ impl<'d> ToyReader<'d> {
 			})
 		}
 
+		let mut weight_data = None;
+
+		if !self.buf.is_empty() {
+			let (tag, mut section) = self.read_section()?;
+			ensure!(&tag == b"WEIG", "Encountered unexpected tag '{}'", tag_to_string(&tag));
+			weight_data = Some(section.read_weight_data()?);
+		}
+
 		Ok(MeshData {
 			positions: vertices,
 			indices,
-			color_data
+			color_data,
+			weight_data,
+		})
+	}
+
+	fn read_weight_data(&mut self) -> ToyResult<MeshWeightData> {
+		let num_bone_names = self.read_u8()? as usize;
+		let mut bone_names = Vec::with_capacity(num_bone_names);
+		for _ in 0..num_bone_names {
+			bone_names.push(self.read_string()?);
+		}
+
+		let num_vertices = self.read_u16()? as usize;
+		let mut weights = Vec::with_capacity(num_vertices);
+
+		// I'm sorry
+		for _ in 0..((num_vertices+3) / 4) {
+			let counts_packed = self.read_u8()?;
+			let counts = [
+				(counts_packed as usize >> 6) & 0b11,
+				(counts_packed as usize >> 4) & 0b11,
+				(counts_packed as usize >> 2) & 0b11,
+				(counts_packed as usize >> 0) & 0b11,
+			];
+
+			for &count in counts.iter() {
+				let mut vertex = MeshWeightVertex::default();
+				for ((_, index), weight) in (0..count).zip(&mut vertex.indices).zip(&mut vertex.weights) {
+					*index = self.read_u8()?;
+					*weight = self.read_uf16()?;
+				}
+				weights.push(vertex);
+			}
+		}
+
+		// Remove extra unnecessary vertices
+		for _ in 0..(num_vertices%4) {
+			weights.pop();
+		}
+
+		Ok(MeshWeightData {
+			bone_names,
+			weights,
 		})
 	}
 
@@ -182,6 +228,10 @@ impl<'d> ToyReader<'d> {
 
 	fn read_f32(&mut self) -> ToyResult<f32> {
 		Ok(f32::from_bits(self.read_u32()?))
+	}
+
+	fn read_uf16(&mut self) -> ToyResult<f32> {
+		Ok(self.read_u16()? as f32 / 65535.0)
 	}
 
 	fn read_vec3(&mut self) -> ToyResult<Vec3> {

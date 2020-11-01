@@ -1,3 +1,5 @@
+#![deny(rust_2018_idioms, future_incompatible)]
+
 pub mod types;
 pub mod importer;
 

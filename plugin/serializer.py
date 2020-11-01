@@ -1,6 +1,17 @@
 
 import struct
+import math
+
 # https://docs.python.org/3/library/struct.html
+
+STRUCT_U8 = struct.Struct('=B')
+STRUCT_U16 = struct.Struct('=H')
+STRUCT_U32 = struct.Struct('=I')
+
+STRUCT_UF16 = struct.Struct('=H')
+STRUCT_F32 = struct.Struct('=f')
+STRUCT_V3 = struct.Struct('=fff')
+STRUCT_V4 = struct.Struct('=ffff')
 
 
 class Serializer:
@@ -21,7 +32,7 @@ class Serializer:
 			else:
 				self.debug_write(str(*args))
 		else:
-			self.out.write(struct.pack(fmt, *args))
+			self.out.write(fmt.pack(*args))
 
 	def write_string(self, s):
 		if self.debug:
@@ -42,20 +53,27 @@ class Serializer:
 		else:
 			self.out.write(bytes(tag, 'utf-8'))
 
+	def write_uf16(self, v):
+		v = max(0, min(65535, v*65536))
+		self.write_raw(STRUCT_UF16, math.floor(v))
+
+	def write_f32(self, v):
+		self.write_raw(STRUCT_F32, v)
+
 	def write_v3(self, v1, v2, v3):
-		self.write_raw('=fff', v1, v2, v3)
+		self.write_raw(STRUCT_V3, v1, v2, v3)
 
 	def write_v4(self, v1, v2, v3, v4):
-		self.write_raw('=ffff', v1, v2, v3, v4)
+		self.write_raw(STRUCT_V4, v1, v2, v3, v4)
 
 	def write_u8(self, v):
-		self.write_raw('=B', v)
+		self.write_raw(STRUCT_U8, v)
 
 	def write_u16(self, v):
-		self.write_raw('=H', v)
+		self.write_raw(STRUCT_U16, v)
 
 	def write_u32(self, v):
-		self.write_raw('=I', v)
+		self.write_raw(STRUCT_U32, v)
 
 
 	def start_section(self, tag):
