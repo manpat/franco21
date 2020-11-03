@@ -40,11 +40,18 @@ pub struct MeshColorData {
 
 #[derive(Debug, Clone)]
 pub struct MeshWeightData {
-	pub bone_names: Vec<String>,
+	pub bones: Vec<MeshBone>,
 	pub weights: Vec<MeshWeightVertex>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
+pub struct MeshBone {
+	pub name: String,
+	pub head: Vec3,
+	pub tail: Vec3,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
 pub struct MeshWeightVertex {
 	pub indices: [u8; 3],
 	pub weights: [f32; 3],

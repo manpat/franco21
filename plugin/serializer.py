@@ -53,9 +53,12 @@ class Serializer:
 		else:
 			self.out.write(bytes(tag, 'utf-8'))
 
-	def write_uf16(self, v):
-		v = max(0, min(65535, v*65536))
-		self.write_raw(STRUCT_UF16, math.floor(v))
+	def write_uf16(self, fv):
+		v = max(0, min(65535, fv*65536))
+		if self.debug:
+			self.write_raw(None, math.floor(v), str(fv))
+		else:
+			self.write_raw(STRUCT_UF16, math.floor(v))
 
 	def write_f32(self, v):
 		self.write_raw(STRUCT_F32, v)
@@ -67,9 +70,11 @@ class Serializer:
 		self.write_raw(STRUCT_V4, v1, v2, v3, v4)
 
 	def write_u8(self, v):
+		assert 0 <= v <= 255
 		self.write_raw(STRUCT_U8, v)
 
 	def write_u16(self, v):
+		assert 0 <= v <= 65535
 		self.write_raw(STRUCT_U16, v)
 
 	def write_u32(self, v):

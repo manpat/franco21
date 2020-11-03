@@ -127,10 +127,14 @@ impl<'d> ToyReader<'d> {
 	}
 
 	fn read_weight_data(&mut self) -> ToyResult<MeshWeightData> {
-		let num_bone_names = self.read_u8()? as usize;
-		let mut bone_names = Vec::with_capacity(num_bone_names);
-		for _ in 0..num_bone_names {
-			bone_names.push(self.read_string()?);
+		let num_bones = self.read_u8()? as usize;
+		let mut bones = Vec::with_capacity(num_bones);
+		for _ in 0..num_bones {
+			bones.push(MeshBone {
+				name: self.read_string()?,
+				head: self.read_vec3()?,
+				tail: self.read_vec3()?,
+			});
 		}
 
 		let num_vertices = self.read_u16()? as usize;
@@ -148,7 +152,7 @@ impl<'d> ToyReader<'d> {
 
 			for &count in counts.iter() {
 				let mut vertex = MeshWeightVertex::default();
-				for ((_, index), weight) in (0..count).zip(&mut vertex.indices).zip(&mut vertex.weights) {
+				for (index, weight) in vertex.indices.iter_mut().zip(&mut vertex.weights).take(count) {
 					*index = self.read_u8()?;
 					*weight = self.read_uf16()?;
 				}
@@ -162,7 +166,7 @@ impl<'d> ToyReader<'d> {
 		}
 
 		Ok(MeshWeightData {
-			bone_names,
+			bones,
 			weights,
 		})
 	}
