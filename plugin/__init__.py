@@ -14,10 +14,11 @@ if "bpy" in locals():
 	imp.reload(serializer)
 	imp.reload(entity)
 	imp.reload(mesh)
+	imp.reload(anim)
 	imp.reload(util)
 else:
 	import bpy
-	from . import exporter, serializer, entity, mesh, util
+	from . import exporter, serializer, entity, mesh, anim, util
 
 
 # Register and add to the file selector

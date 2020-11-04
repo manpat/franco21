@@ -2,11 +2,11 @@ import collections
 import bmesh
 
 from .util import swap_coords
-
+from . import anim
 
 Mesh = collections.namedtuple(
 	"Mesh",
-	"vertices triangles color_data weight_data"
+	"vertices triangles color_data animation_data"
 )
 
 Vertex = collections.namedtuple("Vertex", "position layers weights")
@@ -14,7 +14,7 @@ Bone = collections.namedtuple("Bone", "name head tail")
 
 
 
-def collect_mesh(depsgraph, obj):
+def collect_mesh(scene, depsgraph, obj):
 	# We need to set armature to the rest pose otherwise we get 
 	# mesh data for the current pose instead of the unposed mesh data
 	armature = None
@@ -83,7 +83,7 @@ def collect_mesh(depsgraph, obj):
 	]
 
 	# Optionally extract vertex weights and armature info if it's available
-	weight_data = None
+	animation_data = None
 	if layer_deform is not None and armature is not None:
 		used_group_ids = set(group_id for v in verts for (group_id, weight) in v.weights)
 		group_names = [g.name for g in obj.vertex_groups]
@@ -103,15 +103,13 @@ def collect_mesh(depsgraph, obj):
 			if bone is None:
 				print("couldn't find bone for vertex group '%s'. skipping..." % (name,))
 				continue
+				
 			bones.append(Bone(name, swap_coords(bone.head_local), swap_coords(bone.tail_local)))
 
-		print(index_map)
-		print([v.weights for v in verts])
-		print([remap_weights(v.weights) for v in verts])
-
-		weight_data = {
+		animation_data = {
 			'bones': bones,
-			'data': [remap_weights(v.weights) for v in verts]
+			'data': [remap_weights(v.weights) for v in verts],
+			'animations': anim.collect_animations(scene, armature)
 		}
 
 	# TODO: normal data
@@ -119,8 +117,7 @@ def collect_mesh(depsgraph, obj):
 
 	bm.free()
 
-	return Mesh(vert_positions, tris, color_data, weight_data)
-
+	return Mesh(vert_positions, tris, color_data, animation_data)
 
 
 def write_mesh(ser, mesh):
@@ -153,9 +150,9 @@ def write_mesh(ser, mesh):
 		for el in data:
 			ser.write_v4(*el)
 
-	if mesh.weight_data is not None:
-		bones = mesh.weight_data['bones']
-		vert_weights = mesh.weight_data['data']
+	if mesh.animation_data is not None:
+		bones = mesh.animation_data['bones']
+		vert_weights = mesh.animation_data['data']
 
 		ser.start_section("WEIG")
 		ser.write_u8(len(bones))
@@ -199,5 +196,7 @@ def write_mesh(ser, mesh):
 					ser.write_uf16(weight)
 
 		ser.end_section()
+
+		anim.write_animations(ser, mesh.animation_data['animations'])
 
 	ser.end_section()

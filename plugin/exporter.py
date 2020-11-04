@@ -4,7 +4,7 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty
 from . import mesh, entity, serializer
-from .util import swap_coords
+from .util import swap_coords, swap_coords_scale
 
 # bpy.ops.export.toy_scene(filepath="/home/patrick/Development/wasm-toys/src/bin/fish/main.toy")
 # bpy.ops.export.toy_scene(filepath="/home/patrick/Development/wasm-toys/untitled.toy", debug_run=True)
@@ -12,6 +12,9 @@ from .util import swap_coords
 # blender --background main.blend --python-expr "import bpy; bpy.ops.export.toy_scene(filepath='/home/patrick/Development/skelet/assets/main', debug_run=False)"
 
 # https://github.com/lsalzman/iqm/blob/777d946f6ba65fa93874d43c2fd728aac6c70b2d/blender-2.80/iqm_export.py
+# https://github.com/sobotka/blender-addons/blob/5614916cf6ca0f261617384240acc0909f8adb9e/io_scene_fbx/export_fbx_bin.py
+# https://github.com/Project-Cartographer/H2V-Blender-Animation-Exporter/blob/master/io_scene_jma/export_jma.py
+# https://github.com/vika-sonne/batch-egg-file-animation-export/blob/master/__init__.py
 
 VERSION = 3
 
@@ -105,7 +108,7 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 			self.mesh_count += 1
 			self.mesh_ids[odata] = self.mesh_count # ids start at 1
 
-			yield mesh.collect_mesh(depsgraph, obj)
+			yield mesh.collect_mesh(scene, depsgraph, obj)
 
 
 	def collect_entities(self, scene, ent_list):
@@ -132,10 +135,6 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 			# TODO: object type
 			# TODO: collections
 			# TODO: tags
-
-			scale = obj.scale
-			scale = [scale.x, scale.z, scale.y]
-
 			# TODO: handle parent transforms
 
 			yield entity.Entity(
@@ -143,10 +142,8 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 
 				swap_coords(obj.location.xyz),
 				swap_coords(obj.rotation_euler.to_quaternion()), # This okay so long as handedness stays the same
-				scale,
+				swap_coords_scale(obj.scale),
 			)
-
-
 
 
 def menu_func(self, context):
