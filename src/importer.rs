@@ -66,6 +66,12 @@ impl<'d> ToyReader<'d> {
 		Ok((tag, ToyReader{ buf: section }))
 	}
 
+	fn expect_section(&mut self, expected: &Tag) -> ToyResult<ToyReader<'_>> {
+		let (tag, section) = self.read_section()?;
+		ensure!(&tag == expected, "Encountered unexpected tag '{}'", tag_to_string(&tag));
+		Ok(section)
+	}
+
 	fn read_mesh(&mut self) -> ToyResult<MeshData> {
 		let num_vertices = self.read_u16()? as usize;
 		let mut vertices = Vec::with_capacity(num_vertices);
@@ -110,23 +116,22 @@ impl<'d> ToyReader<'d> {
 			})
 		}
 
-		let mut weight_data = None;
+		let mut animation_data = None;
 
 		if !self.buf.is_empty() {
-			let (tag, mut section) = self.read_section()?;
-			ensure!(&tag == b"WEIG", "Encountered unexpected tag '{}'", tag_to_string(&tag));
-			weight_data = Some(section.read_weight_data()?);
+			let mut section = self.expect_section(b"SKIN")?;
+			animation_data = Some(section.read_animation_data()?);
 		}
 
 		Ok(MeshData {
 			positions: vertices,
 			indices,
 			color_data,
-			weight_data,
+			animation_data,
 		})
 	}
 
-	fn read_weight_data(&mut self) -> ToyResult<MeshWeightData> {
+	fn read_animation_data(&mut self) -> ToyResult<MeshAnimationData> {
 		let num_bones = self.read_u8()? as usize;
 		let mut bones = Vec::with_capacity(num_bones);
 		for _ in 0..num_bones {
@@ -165,10 +170,58 @@ impl<'d> ToyReader<'d> {
 			weights.pop();
 		}
 
-		Ok(MeshWeightData {
+		let mut section = self.expect_section(b"ANMS")?;
+		let animations = section.read_animations()?;
+
+		Ok(MeshAnimationData {
 			bones,
 			weights,
+			animations
 		})
+	}
+
+	fn read_animations(&mut self) -> ToyResult<Vec<MeshAnimation>> {
+		let mut animations = Vec::new();
+
+		while !self.buf.is_empty() {
+			let mut section = self.expect_section(b"ANIM")?;
+			animations.push(MeshAnimation {
+				name: section.read_string()?,
+				fps: section.read_f32()?,
+				channels: section.read_animation_channels()?,
+			});
+		}
+
+		Ok(animations)
+	}
+
+	fn read_animation_channels(&mut self) -> ToyResult<Vec<MeshAnimationChannel>> {
+		let num_frames = self.read_u16()? as usize;
+		let num_channels = self.read_u8()? as usize;
+		let mut channels = Vec::with_capacity(num_channels);
+
+		for _ in 0..num_channels {
+			channels.push(MeshAnimationChannel {
+				bone: self.read_string()?,
+				frames: self.read_animation_frames(num_frames)?,
+			})
+		}
+
+		Ok(channels)
+	}
+
+	fn read_animation_frames(&mut self, num_frames: usize) -> ToyResult<Vec<MeshAnimationFrame>> {
+		let mut frames = Vec::with_capacity(num_frames);
+
+		for _ in 0..num_frames {
+			frames.push(MeshAnimationFrame {
+				position: self.read_vec3()?,
+				rotation: self.read_quat()?,
+				scale: self.read_vec3()?,
+			});
+		}
+
+		Ok(frames)
 	}
 
 	fn read_entity(&mut self) -> ToyResult<EntityData> {

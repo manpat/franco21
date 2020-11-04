@@ -32,7 +32,7 @@ def action_fits_armature(action, armature):
 
 
 
-def collect_animations(scene, armature):
+def collect_animations(scene, armature, bones):
 	animations = []
 
 	original_frame = scene.frame_current
@@ -64,8 +64,13 @@ def collect_animations(scene, armature):
 					swap_coords_scale(scale)
 				))
 
-		channels = [AnimationChannel(bone.name, frames) for (bone, frames) in channels.items()]
-		animations.append(Animation(action.name, 1, channels))
+		bone_index = {bone.name: index for index, bone in enumerate(bones)}
+		print(bone_index)
+
+		channels = (AnimationChannel(bone.name, frames) for (bone, frames) in channels.items())
+		channels = filter(lambda ch: ch.bone in bone_index, channels)
+		channels = sorted(channels, key=lambda ch: bone_index[ch.bone])
+		animations.append(Animation(action.name, 1, list(channels)))
 
 	armature.animation_data.action = original_action
 	scene.frame_set(original_frame)

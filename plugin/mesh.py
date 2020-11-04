@@ -109,7 +109,7 @@ def collect_mesh(scene, depsgraph, obj):
 		animation_data = {
 			'bones': bones,
 			'data': [remap_weights(v.weights) for v in verts],
-			'animations': anim.collect_animations(scene, armature)
+			'animations': anim.collect_animations(scene, armature, bones)
 		}
 
 	# TODO: normal data
@@ -154,7 +154,7 @@ def write_mesh(ser, mesh):
 		bones = mesh.animation_data['bones']
 		vert_weights = mesh.animation_data['data']
 
-		ser.start_section("WEIG")
+		ser.start_section("SKIN")
 		ser.write_u8(len(bones))
 		for bone in bones:
 			ser.write_string(bone.name)
@@ -195,8 +195,8 @@ def write_mesh(ser, mesh):
 					ser.write_u8(index)
 					ser.write_uf16(weight)
 
-		ser.end_section()
-
 		anim.write_animations(ser, mesh.animation_data['animations'])
+
+		ser.end_section()
 
 	ser.end_section()

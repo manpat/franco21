@@ -29,7 +29,7 @@ pub struct MeshData {
 	pub positions: Vec<Vec3>,
 	pub indices: Vec<u16>,
 	pub color_data: Vec<MeshColorData>,
-	pub weight_data: Option<MeshWeightData>,
+	pub animation_data: Option<MeshAnimationData>,
 }
 
 #[derive(Debug, Clone)]
@@ -38,10 +38,13 @@ pub struct MeshColorData {
 	pub data: Vec<Vec4>,
 }
 
+
+
 #[derive(Debug, Clone)]
-pub struct MeshWeightData {
+pub struct MeshAnimationData {
 	pub bones: Vec<MeshBone>,
 	pub weights: Vec<MeshWeightVertex>,
+	pub animations: Vec<MeshAnimation>,
 }
 
 #[derive(Debug, Clone)]
@@ -56,6 +59,28 @@ pub struct MeshWeightVertex {
 	pub indices: [u8; 3],
 	pub weights: [f32; 3],
 }
+
+#[derive(Debug, Clone)]
+pub struct MeshAnimation {
+	pub name: String,
+	pub fps: f32,
+	pub channels: Vec<MeshAnimationChannel>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MeshAnimationChannel {
+	pub bone: String, // TODO: should be an index
+	pub frames: Vec<MeshAnimationFrame>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MeshAnimationFrame {
+	pub position: Vec3,
+	pub rotation: Quat,
+	pub scale: Vec3,
+}
+
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct SceneRef<'toy> {
