@@ -52,11 +52,11 @@ def collect_animations(scene, armature, bones):
 
 			for pose_bone in armature.pose.bones:
 				m = pose_bone.matrix
+				m_c = pose_bone.matrix_channel.to_3x3()
 
 				position = m.to_translation()
-				rotation = pose_bone.matrix_channel.to_3x3().to_quaternion()
-				rotation.normalize()
-				scale = m.to_scale()
+				rotation = pose_bone.matrix_channel.to_3x3().to_quaternion().normalized()
+				scale = m_c.to_scale()
 
 				channels[pose_bone].append(Frame(
 					swap_coords(position),
