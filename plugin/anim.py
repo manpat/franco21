@@ -54,7 +54,7 @@ def collect_animations(scene, armature, bones):
 				m = pose_bone.matrix
 
 				position = m.to_translation()
-				rotation = m.to_3x3().inverted().transposed().to_quaternion()
+				rotation = pose_bone.matrix_channel.to_3x3().to_quaternion()
 				rotation.normalize()
 				scale = m.to_scale()
 
@@ -65,12 +65,13 @@ def collect_animations(scene, armature, bones):
 				))
 
 		bone_index = {bone.name: index for index, bone in enumerate(bones)}
-		print(bone_index)
+		# print(bone_index)
 
 		channels = (AnimationChannel(bone.name, frames) for (bone, frames) in channels.items())
 		channels = filter(lambda ch: ch.bone in bone_index, channels)
 		channels = sorted(channels, key=lambda ch: bone_index[ch.bone])
-		animations.append(Animation(action.name, 1, list(channels)))
+		fps = bpy.context.scene.render.fps
+		animations.append(Animation(action.name, fps, list(channels)))
 
 	armature.animation_data.action = original_action
 	scene.frame_set(original_frame)
