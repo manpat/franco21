@@ -10,6 +10,7 @@ from .util import swap_coords, swap_coords_scale
 # bpy.ops.export.toy_scene(filepath="/home/patrick/Development/wasm-toys/untitled.toy", debug_run=True)
 
 # blender --background main.blend --python-expr "import bpy; bpy.ops.export.toy_scene(filepath='/home/patrick/Development/skelet/assets/main', debug_run=False)"
+# blender --background 2.blend --python-expr "import bpy; bpy.ops.export.toy_scene(filepath='2.toy', debug_run=True)"
 
 # https://github.com/lsalzman/iqm/blob/777d946f6ba65fa93874d43c2fd728aac6c70b2d/blender-2.80/iqm_export.py
 # https://github.com/sobotka/blender-addons/blob/5614916cf6ca0f261617384240acc0909f8adb9e/io_scene_fbx/export_fbx_bin.py
@@ -137,12 +138,18 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 			# TODO: tags
 			# TODO: handle parent transforms
 
+			m = obj.matrix_world
+
+			position = m.to_translation()
+			scale = m.to_scale()
+			rotation = m.to_3x3().to_quaternion().normalized()
+
 			yield entity.Entity(
 				obj.name, entity_id, mesh_id,
 
-				swap_coords(obj.location.xyz),
-				swap_coords(obj.rotation_euler.to_quaternion()), # This okay so long as handedness stays the same
-				swap_coords_scale(obj.scale),
+				swap_coords(position.xyz),
+				swap_coords(rotation), # This okay so long as handedness stays the same
+				swap_coords_scale(scale),
 			)
 
 

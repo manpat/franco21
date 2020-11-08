@@ -159,6 +159,14 @@ impl<'t> EntityRef<'t> {
 	}
 }
 
+impl EntityData {
+	pub fn transform(&self) -> Mat4 {
+		Mat4::translate(self.position)
+			* self.rotation.to_mat4()
+			* Mat4::scale(self.scale)
+	}
+}
+
 impl Deref for EntityRef<'_> {
 	type Target = EntityData;
 	fn deref(&self) -> &Self::Target { self.entity }
