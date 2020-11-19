@@ -57,6 +57,8 @@ def collect_animations(scene, armature, bones):
 				position = m.to_translation()
 				rotation = pose_bone.matrix_channel.to_3x3().to_quaternion().normalized()
 				scale = m_c.to_scale()
+				# TODO: check what happens w/ negative scales
+				# potentially replace with a matrix decompose
 
 				channels[pose_bone].append(Frame(
 					swap_coords(position),

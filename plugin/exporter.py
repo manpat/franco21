@@ -138,11 +138,10 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 			# TODO: tags
 			# TODO: handle parent transforms
 
-			m = obj.matrix_world
-
-			position = m.to_translation()
-			scale = m.to_scale()
-			rotation = m.to_3x3().to_quaternion().normalized()
+			# going through matrix decompose is lossy, but is better than
+			# pulling out rotation and scale separately. weird things
+			# can happen with negative scales otherwise
+			position, rotation, scale = obj.matrix_world.decompose()
 
 			yield entity.Entity(
 				obj.name, entity_id, mesh_id,
