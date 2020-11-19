@@ -2,6 +2,7 @@
 #![feature(box_syntax)]
 #![feature(specialization)]
 #![feature(generators, generator_trait)]
+#![feature(const_fn_floating_point_arithmetic)]
 
 pub extern crate rand;
 
