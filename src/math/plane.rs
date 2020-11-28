@@ -18,6 +18,9 @@ impl Plane {
 		Plane::new(n, n.dot(a))
 	}
 
+	pub fn normal(&self) -> Vec3 { self.normal }
+	pub fn length(&self) -> f32 { self.length }
+
 	pub fn distance_to(&self, p: Vec3) -> f32 {
 		self.normal.dot(p) - self.length
 	}
