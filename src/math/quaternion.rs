@@ -27,6 +27,18 @@ impl Quat {
 		)
 	}
 
+	pub fn from_pitch(pitch: f32) -> Quat {
+		Quat::new(Vec3::from_x(1.0), pitch)
+	}
+
+	pub fn from_yaw(yaw: f32) -> Quat {
+		Quat::new(Vec3::from_y(1.0), yaw)
+	}
+
+	pub fn from_roll(roll: f32) -> Quat {
+		Quat::new(Vec3::from_z(-1.0), roll)
+	}
+
 	pub fn forward(&self) -> Vec3 { *self * Vec3::from_z(-1.0) }
 	pub fn right(&self) -> Vec3 { *self * Vec3::from_x(1.0) }
 	pub fn up(&self) -> Vec3 { *self * Vec3::from_y(1.0) }

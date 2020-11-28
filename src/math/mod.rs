@@ -1,4 +1,5 @@
 pub use std::f32::consts::PI;
+pub use std::f32::consts::TAU;
 
 pub mod color;
 pub mod vector;
