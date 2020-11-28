@@ -2,8 +2,8 @@ use vector::Vec3;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Plane {
-	normal: Vec3,
-	length: f32,
+	pub normal: Vec3,
+	pub length: f32,
 }
 
 impl Plane {
@@ -17,9 +17,6 @@ impl Plane {
 		let n = ab.cross(ac);
 		Plane::new(n, n.dot(a))
 	}
-
-	pub fn normal(&self) -> Vec3 { self.normal }
-	pub fn length(&self) -> f32 { self.length }
 
 	pub fn distance_to(&self, p: Vec3) -> f32 {
 		self.normal.dot(p) - self.length
