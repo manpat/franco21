@@ -1,6 +1,6 @@
 use vector::Vec3;
 
-
+#[derive(Copy, Clone, Debug)]
 pub struct Plane {
 	normal: Vec3,
 	length: f32,
