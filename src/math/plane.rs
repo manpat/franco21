@@ -14,8 +14,11 @@ impl Plane {
 	pub fn from_points(a: Vec3, b: Vec3, c: Vec3) -> Self {
 		let ab = (b-a).normalize();
 		let ac = (c-a).normalize();
-		let n = ab.cross(ac);
-		Plane::new(n, n.dot(a))
+		let normal = ab.cross(ac).normalize();
+		Plane {
+			normal,
+			length: normal.dot(a),
+		}
 	}
 
 	pub fn distance_to(&self, p: Vec3) -> f32 {
