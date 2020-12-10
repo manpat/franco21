@@ -73,6 +73,29 @@ impl Quat {
 			Vec4::new(0.0, 0.0, 0.0, 1.0)
 		]).transpose()
 	}
+
+	// Stolen and adjusted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	// TODO: test these!
+	pub fn yaw(&self) -> f32 {
+		let siny_cosp = 2.0 * (self.w * self.y + self.z * self.x);
+		let cosy_cosp = 1.0 - 2.0 * (self.x * self.x + self.y * self.y);
+		siny_cosp.atan2(cosy_cosp)
+	}
+
+	// pub fn roll(&self) -> f32 {
+	// 	let sinr_cosp = 2.0 * (self.w * self.z + self.x * self.y);
+	// 	let cosr_cosp = 1.0 - 2.0 * (self.z * self.z + self.x * self.x);
+	// 	sinr_cosp.atan2(cosr_cosp)
+	// }
+
+	// pub fn pitch(&self) -> f32 {
+	// 	let sinp = 2.0 * (self.w * self.x - self.y * self.z);
+	// 	if sinp.abs() >= 1.0 {
+	// 		(PI / 2.0).copysign(sinp) // use 90 degrees if out of range
+	// 	} else {
+	// 		sinp.asin()
+	// 	}
+	// }
 }
 
 

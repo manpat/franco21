@@ -44,6 +44,8 @@ impl Vec2 {
 	pub fn extend(self, z: f32) -> Vec3 { Vec3::new(self.x, self.y, z) }
 
 	pub fn length(self) -> f32 { self.dot(self).sqrt() }
+
+	/// CCW 90° rotate
 	pub fn perp(self) -> Vec2 { Vec2::new(-self.y, self.x) }
 	
 	pub fn normalize(self) -> Vec2 { self * (1.0/self.length()) }
