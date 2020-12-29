@@ -59,12 +59,19 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 		for scene in bpy.data.scenes:
 			scene.view_layers[0].update() # to make sure they have a depsgraph
 
+		current_scene = bpy.context.window.scene
+
 		with open(fname, 'wb') as out:
 			ser = serializer.Serializer(out, debug_run)
 			ser.write_magic_number(VERSION)
 
 			for s in bpy.data.scenes:
-				for m in self.collect_meshes(s):
+				bpy.context.window.scene = s
+
+				depsgraph = bpy.context.evaluated_depsgraph_get()
+				depsgraph.update()
+
+				for m in self.collect_meshes(s, depsgraph):
 					mesh.write_mesh(ser, m)
 
 				entities = []
@@ -79,6 +86,7 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 					ser.write_u32(e)
 				ser.end_section()
 
+		bpy.context.window.scene = current_scene
 
 		return {'FINISHED'}
 
@@ -94,10 +102,7 @@ class ExportToyScene(bpy.types.Operator, ExportHelper):
 		ser.end_section()
 
 
-	def collect_meshes(self, scene):
-		# depsgraph = scene.view_layers[0].depsgraph
-		depsgraph = bpy.context.evaluated_depsgraph_get()
-
+	def collect_meshes(self, scene, depsgraph):
 		for obj in scene.objects:
 			if obj.type != 'MESH':
 				continue
