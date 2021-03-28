@@ -34,7 +34,7 @@ impl<'d> ToyReader<'d> {
 				b"SCNE" => scenes.push(section.read_scene().map_err(to_err)?),
 				b"MESH" => meshes.push(section.read_mesh().map_err(to_err)?),
 				b"ENTY" => entities.push(section.read_entity().map_err(to_err)?),
-				_ => bail!("Unexpected tag '{}' encountered", tag_to_string(&tag))
+				_ => { bail!("Unexpected tag '{}' encountered", tag_to_string(&tag)); }
 			}
 		}
 

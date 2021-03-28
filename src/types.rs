@@ -114,7 +114,8 @@ impl Project {
 }
 
 impl MeshData {
-	pub fn color_data(&self, name: &str) -> Option<&MeshColorData> {
+	pub fn color_data<'s>(&self, name: impl Into<Option<&'s str>>) -> Option<&MeshColorData> {
+		let name = name.into().unwrap_or(crate::DEFAULT_COLOR_DATA_NAME);
 		self.color_data.iter()
 			.find(|l| l.name == name)
 	}
