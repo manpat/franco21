@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-
 pub mod raw {
 	include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
@@ -20,7 +17,7 @@ pub use self::shader::*;
 
 pub struct Context {
 	_sdl_ctx: sdl2::video::GLContext,
-	shader_imports: HashMap<String, String>,
+	shader_manager: ShaderManager,
 }
 
 
@@ -65,7 +62,7 @@ impl Context {
 
 		Context {
 			_sdl_ctx: sdl_ctx,
-			shader_imports: HashMap::new(),
+			shader_manager: ShaderManager::new(),
 		}
 	}
 
@@ -146,12 +143,11 @@ impl Context {
 
 
 	pub fn add_shader_import(&mut self, name: impl Into<String>, src: impl Into<String>) {
-		let existing_import_src = self.shader_imports.insert(name.into(), src.into());
-		assert!(existing_import_src.is_none());
+		self.shader_manager.add_import(name, src)
 	}
 
-	pub fn new_shader(&self, shaders: &[(u32, &str)]) -> Shader {
-		compile_shaders(shaders, &self.shader_imports)
+	pub fn new_shader(&self, shaders: &[(u32, &str)]) -> Result<Shader, shader::CompilationError> {
+		self.shader_manager.get_shader(shaders)
 	}
 
 	pub fn bind_shader(&self, shader: Shader) {

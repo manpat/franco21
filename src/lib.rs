@@ -1,3 +1,5 @@
+#![feature(backtrace)]
+
 pub mod prelude;
 pub mod gl;
 pub mod perf;
