@@ -1,4 +1,4 @@
-use vector::Vec3;
+use crate::vector::Vec3;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Plane {

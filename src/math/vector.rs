@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub, Mul, Div, Neg};
 use std::ops::{AddAssign, SubAssign, MulAssign, DivAssign};
 use std::iter::{Sum, Product};
-use easing::*;
+use crate::easing::*;
 use rand::{Rand, Rng};
 
 #[repr(C)]

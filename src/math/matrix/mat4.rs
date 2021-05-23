@@ -1,9 +1,12 @@
 use std::ops::Mul;
-use vector::*;
+use crate::vector::*;
+use crate::matrix::Mat3x4;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct Mat4{pub rows: [Vec4; 4]}
+pub struct Mat4 {
+	pub rows: [Vec4; 4]
+}
 
 impl Mat4 {
 	pub fn new(d: &[f32; 16]) -> Mat4 {
@@ -18,57 +21,36 @@ impl Mat4 {
 	}
 
 	pub fn from_rows(rows: [Vec4; 4]) -> Mat4 { Mat4 { rows } }
+	pub fn from_columns(columns: [Vec4; 4]) -> Mat4 {
+		Mat4::from_rows(columns).transpose()
+	}
 
 	pub fn ident() -> Mat4 { Mat4::uniform_scale(1.0) }
 	pub fn uniform_scale(s: f32) -> Mat4 { Mat4::scale(Vec3::new(s,s,s)) }
 
 	pub fn scale(s: Vec3) -> Mat4 {
-		Mat4::new(&[
-			s.x, 0.0, 0.0, 0.0,
-			0.0, s.y, 0.0, 0.0, 
-			0.0, 0.0, s.z, 0.0,
-			0.0, 0.0, 0.0, 1.0,
-		])
+		Mat3x4::scale(s).to_mat4()
 	}
 
 	pub fn translate(t: Vec3) -> Mat4 {
-		Mat4::new(&[
-			1.0, 0.0, 0.0, t.x,
-			0.0, 1.0, 0.0, t.y, 
-			0.0, 0.0, 1.0, t.z,
-			0.0, 0.0, 0.0, 1.0,
-		])
+		Mat3x4::translate(t).to_mat4()
 	}
 
 	pub fn xrot(ph: f32) -> Mat4 {
-		let (rx, ry) = (ph.cos(), ph.sin());
-
-		Mat4::new(&[
-			1.0, 0.0, 0.0, 0.0, 
-			0.0,  rx, -ry, 0.0,
-			0.0,  ry,  rx, 0.0,
-			0.0, 0.0, 0.0, 1.0,
-		])
+		Mat3x4::xrot(ph).to_mat4()
 	}
+
 	pub fn yrot(ph: f32) -> Mat4 {
-		let (rx, ry) = (ph.cos(), ph.sin());
-
-		Mat4::new(&[
-			 rx, 0.0, -ry, 0.0,
-			0.0, 1.0, 0.0, 0.0, 
-			 ry, 0.0,  rx, 0.0,
-			0.0, 0.0, 0.0, 1.0,
-		])
+		Mat3x4::yrot(ph).to_mat4()
 	}
-	pub fn zrot(ph: f32) -> Mat4 {
-		let (rx, ry) = (ph.cos(), ph.sin());
 
-		Mat4::new(&[
-			 rx, -ry, 0.0, 0.0,
-			 ry,  rx, 0.0, 0.0,
-			0.0, 0.0, 1.0, 0.0,
-			0.0, 0.0, 0.0, 1.0,
-		])
+	pub fn zrot(ph: f32) -> Mat4 {
+		Mat3x4::zrot(ph).to_mat4()
+	}
+
+	pub fn to_mat3x4(&self) -> Mat3x4 {
+		let [a,b,c,_] = self.rows;
+		Mat3x4::from_rows([a, b, c])
 	}
 
 	pub fn transpose(&self) -> Mat4 {
@@ -86,14 +68,17 @@ impl Mat4 {
 		let [a,b,c,d] = self.rows;
 		Vec4::new(a.x, b.x, c.x, d.x)
 	}
+
 	pub fn column_y(&self) -> Vec4 {
 		let [a,b,c,d] = self.rows;
 		Vec4::new(a.y, b.y, c.y, d.y)
 	}
+
 	pub fn column_z(&self) -> Vec4 {
 		let [a,b,c,d] = self.rows;
 		Vec4::new(a.z, b.z, c.z, d.z)
 	}
+
 	pub fn column_w(&self) -> Vec4 {
 		let [a,b,c,d] = self.rows;
 		Vec4::new(a.w, b.w, c.w, d.w)

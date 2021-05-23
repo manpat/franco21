@@ -1,5 +1,5 @@
-use math::vector::*;
-use easing::Ease;
+use crate::math::vector::*;
+use crate::easing::Ease;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

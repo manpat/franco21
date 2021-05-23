@@ -1,5 +1,5 @@
 use std::ops::{Mul, Div};
-use vector::*;
+use crate::vector::*;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

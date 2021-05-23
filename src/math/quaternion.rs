@@ -1,7 +1,7 @@
 use std::ops::{Add, Mul};
-use matrix::*;
-use vector::*;
-use easing::*;
+use crate::matrix::*;
+use crate::vector::*;
+use crate::easing::*;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Quat{pub x: f32, pub y: f32, pub z: f32, pub w: f32}
@@ -66,12 +66,21 @@ impl Quat {
 	}
 
 	pub fn to_mat4(&self) -> Mat4 {
-		Mat4::from_rows([
+		Mat4::from_columns([
 			(*self * Vec3::new(1.0, 0.0, 0.0)).extend(0.0),
 			(*self * Vec3::new(0.0, 1.0, 0.0)).extend(0.0),
 			(*self * Vec3::new(0.0, 0.0, 1.0)).extend(0.0),
-			Vec4::new(0.0, 0.0, 0.0, 1.0)
-		]).transpose()
+			Vec4::from_w(1.0)
+		])
+	}
+
+	pub fn to_mat3x4(&self) -> Mat3x4 {
+		Mat3x4::from_columns([
+			*self * Vec3::new(1.0, 0.0, 0.0),
+			*self * Vec3::new(0.0, 1.0, 0.0),
+			*self * Vec3::new(0.0, 0.0, 1.0),
+			Vec3::splat(0.0),
+		])
 	}
 
 	// Stolen and adjusted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
