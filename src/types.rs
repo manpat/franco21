@@ -161,10 +161,10 @@ impl<'t> EntityRef<'t> {
 }
 
 impl EntityData {
-	pub fn transform(&self) -> Mat4 {
-		Mat4::translate(self.position)
-			* self.rotation.to_mat4()
-			* Mat4::scale(self.scale)
+	pub fn transform(&self) -> Mat3x4 {
+		Mat3x4::translate(self.position)
+			* self.rotation.to_mat3x4()
+			* Mat3x4::scale(self.scale)
 	}
 }
 
