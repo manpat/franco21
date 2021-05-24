@@ -30,16 +30,8 @@ impl Mat3x4 {
 		])
 	}
 
-	pub fn ident() -> Mat3x4 { Mat3x4::uniform_scale(1.0) }
+	pub fn identity() -> Mat3x4 { Mat3x4::uniform_scale(1.0) }
 	pub fn uniform_scale(s: f32) -> Mat3x4 { Mat3x4::scale(Vec3::new(s,s,s)) }
-
-	pub fn scale(s: Vec3) -> Mat3x4 {
-		Mat3x4::new(&[
-			s.x, 0.0, 0.0, 0.0,
-			0.0, s.y, 0.0, 0.0, 
-			0.0, 0.0, s.z, 0.0,
-		])
-	}
 
 	pub fn translate(t: Vec3) -> Mat3x4 {
 		Mat3x4::new(&[
@@ -49,32 +41,56 @@ impl Mat3x4 {
 		])
 	}
 
-	pub fn xrot(ph: f32) -> Mat3x4 {
-		let (rx, ry) = (ph.cos(), ph.sin());
-
+	pub fn scale_translate(s: Vec3, t: Vec3) -> Mat3x4 {
 		Mat3x4::new(&[
-			1.0, 0.0, 0.0, 0.0, 
-			0.0,  rx, -ry, 0.0,
-			0.0,  ry,  rx, 0.0,
+			s.x, 0.0, 0.0, t.x,
+			0.0, s.y, 0.0, t.y, 
+			0.0, 0.0, s.z, t.z,
 		])
 	}
-	pub fn yrot(ph: f32) -> Mat3x4 {
+
+	pub fn rotate_x_translate(ph: f32, t: Vec3) -> Mat3x4 {
 		let (rx, ry) = (ph.cos(), ph.sin());
 
 		Mat3x4::new(&[
-			 rx, 0.0, -ry, 0.0,
-			0.0, 1.0, 0.0, 0.0, 
-			 ry, 0.0,  rx, 0.0,
+			1.0, 0.0, 0.0, t.x,
+			0.0,  rx, -ry, t.y,
+			0.0,  ry,  rx, t.z,
 		])
 	}
-	pub fn zrot(ph: f32) -> Mat3x4 {
+	pub fn rotate_y_translate(ph: f32, t: Vec3) -> Mat3x4 {
 		let (rx, ry) = (ph.cos(), ph.sin());
 
 		Mat3x4::new(&[
-			 rx, -ry, 0.0, 0.0,
-			 ry,  rx, 0.0, 0.0,
-			0.0, 0.0, 1.0, 0.0,
+			 rx, 0.0, -ry, t.x,
+			0.0, 1.0, 0.0, t.y, 
+			 ry, 0.0,  rx, t.z,
 		])
+	}
+	pub fn rotate_z_translate(ph: f32, t: Vec3) -> Mat3x4 {
+		let (rx, ry) = (ph.cos(), ph.sin());
+
+		Mat3x4::new(&[
+			 rx, -ry, 0.0, t.x,
+			 ry,  rx, 0.0, t.y,
+			0.0, 0.0, 1.0, t.z,
+		])
+	}
+
+	pub fn scale(s: Vec3) -> Mat3x4 {
+		Mat3x4::scale_translate(s, Vec3::zero())
+	}
+
+	pub fn rotate_x(ph: f32) -> Mat3x4 {
+		Mat3x4::rotate_x_translate(ph, Vec3::zero())
+	}
+
+	pub fn rotate_y(ph: f32) -> Mat3x4 {
+		Mat3x4::rotate_y_translate(ph, Vec3::zero())
+	}
+
+	pub fn rotate_z(ph: f32) -> Mat3x4 {
+		Mat3x4::rotate_z_translate(ph, Vec3::zero())
 	}
 
 	pub fn to_mat4(&self) -> Mat4 {

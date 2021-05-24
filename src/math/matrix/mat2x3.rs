@@ -34,13 +34,8 @@ impl Mat2x3 {
 		])
 	}
 
-	pub fn scale(s: Vec2) -> Mat2x3 {
-		Mat2x3::scale_translate(s, Vec2::zero())
-	}
-
-	pub fn rotate(ph: f32) -> Mat2x3 {
-		Mat2x3::rotate_translate(ph, Vec2::zero())
-	}
+	pub fn scale(s: Vec2) -> Mat2x3 { Mat2x3::scale_translate(s, Vec2::zero()) }
+	pub fn rotate(ph: f32) -> Mat2x3 { Mat2x3::rotate_translate(ph, Vec2::zero()) }
 
 	pub fn scale_translate(s: Vec2, t: Vec2) -> Mat2x3 {
 		Mat2x3::new([
@@ -72,11 +67,11 @@ impl Mat2x3 {
 		Vec2::new(a.z, b.z)
 	}
 
-	// [a  b  c]
-	// [d  e  f]
-	// [0  0  1]
-
 	pub fn inverse(&self) -> Mat2x3 {
+		// [a  b  c]
+		// [d  e  f]
+		// [0  0  1]
+
 		let [Vec3{x: a, y: b, z: c}, Vec3{x: d, y: e, z: f}] = self.rows;
 
 		let cofactor_20 = b*f - c*e;

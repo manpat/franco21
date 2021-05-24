@@ -26,14 +26,17 @@ impl Mat2 {
 			0.0, s.y,
 		])
 	}
-
-	pub fn rot(ph: f32) -> Mat2 {
+	
+	pub fn rotate(ph: f32) -> Mat2 {
 		let (rx, ry) = (ph.cos(), ph.sin());
 		Mat2::new([
 			rx, -ry,
 			ry,  rx,
 		])
 	}
+
+	#[deprecated]
+	pub fn rot(ph: f32) -> Mat2 { Mat2::rotate(ph) }
 
 	pub fn transpose(&self) -> Mat2 {
 		let [Vec2{x: a, y: b}, Vec2{x: c, y: d}] = self.rows;

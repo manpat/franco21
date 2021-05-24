@@ -11,9 +11,12 @@ impl Quat {
 		Quat{x,y,z,w}
 	}
 
-	pub const fn ident() -> Quat {
+	pub const fn identity() -> Quat {
 		Quat::from_raw(0.0, 0.0, 0.0, 1.0)
 	}
+
+	#[deprecated]
+	pub const fn ident() -> Quat { Quat::identity() }
 
 	pub fn new(axis: Vec3, angle: f32) -> Quat {
 		let angle = angle / 2.0;
@@ -62,7 +65,7 @@ impl Quat {
 
 	pub fn scale(&self, f: f32) -> Quat {
 		// TODO: improve
-		(*self * f + Quat::ident() * (1.0 - f)).normalize()
+		(*self * f + Quat::identity() * (1.0 - f)).normalize()
 	}
 
 	pub fn to_mat4(&self) -> Mat4 {
