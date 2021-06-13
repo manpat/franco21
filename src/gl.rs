@@ -18,6 +18,8 @@ pub use self::shader::*;
 pub struct Context {
 	_sdl_ctx: sdl2::video::GLContext,
 	shader_manager: ShaderManager,
+
+	canvas_size: Vec2i,
 }
 
 
@@ -63,8 +65,20 @@ impl Context {
 		Context {
 			_sdl_ctx: sdl_ctx,
 			shader_manager: ShaderManager::new(),
+
+			canvas_size: Vec2i::splat(1),
 		}
 	}
+
+	pub(crate) fn on_resize(&mut self, w: u32, h: u32) {
+		unsafe {
+			raw::Viewport(0, 0, w as _, h as _);
+			self.canvas_size = Vec2i::new(w as _, h as _);
+		}
+	}
+
+
+	pub fn canvas_size(&self) -> Vec2i { self.canvas_size }
 
 
 	pub fn set_wireframe(&self, wireframe_enabled: bool) {

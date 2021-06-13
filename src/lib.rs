@@ -55,10 +55,11 @@ impl Engine {
 
 			match event {
 				Event::Quit {..} => { self.should_quit = true }
-				// Event::Window{ win_event: WindowEvent::Resized(w, h), .. } => unsafe {
-				// 	gl::raw::Viewport(0, 0, w as _, h as _);
-				// 	camera.aspect = w as f32 / h as f32;
-				// }
+				Event::Window{ win_event: WindowEvent::Resized(..), .. } => unsafe {
+					let (w, h) = self.window.drawable_size();
+					self.gl_ctx.on_resize(w, h);
+					self.input.handle_event(&event)
+				}
 
 				_ => self.input.handle_event(&event),
 			}
