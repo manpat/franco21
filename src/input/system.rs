@@ -139,11 +139,12 @@ impl InputSystem {
 		// Calculate mouse action
 		let mouse_action = self.active_contexts.iter().rev()
 			.flat_map(|&ContextID(id)| self.contexts.get(id))
-			.find_map(InputContext::mouse_action);
+			.find_map(|ctx| ctx.mouse_action().zip(Some(ctx)));
 
-		if let Some((action, action_id)) = mouse_action {
+		if let Some(((action, action_id), context)) = mouse_action {
 			if action.kind().is_relative() {
-				self.frame_state.mouse = self.mouse_delta.map(|state| (action_id, state));
+				let sensitivity = context.mouse_sensitivity().unwrap_or(1.0);
+				self.frame_state.mouse = self.mouse_delta.map(|state| (action_id, state * sensitivity));
 			} else {
 				self.frame_state.mouse = self.mouse_absolute.map(|state| (action_id, state));
 			}
@@ -204,13 +205,7 @@ impl InputSystem {
 	pub fn enter_context(&mut self, context_id: ContextID) {
 		assert!(!self.active_contexts.contains(&context_id));
 		self.active_contexts.push(context_id);
-
 		self.active_contexts_changed = true;
-
-		dbg!(
-			&self.contexts,
-			&self.active_contexts
-		);
 	}
 
 	pub fn leave_context(&mut self, context_id: ContextID) {

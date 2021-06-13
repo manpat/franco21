@@ -19,6 +19,9 @@ pub struct InputContext {
 
 	/// The active bindings from buttons to an action index
 	button_mappings: HashMap<raw::Button, usize>,
+
+	/// The current sensitivity for any Mouse action, if there is one
+	mouse_sensitivity: Option<f32>,
 }
 
 impl InputContext {
@@ -28,6 +31,7 @@ impl InputContext {
 			id,
 			actions: Vec::new(),
 			button_mappings: HashMap::new(),
+			mouse_sensitivity: None,
 		}
 	}
 
@@ -47,16 +51,26 @@ impl InputContext {
 			.map(|&index| (&self.actions[index], ActionID {context_id, index}))
 	}
 
+	pub fn mouse_sensitivity(&self) -> Option<f32> {
+		self.mouse_sensitivity
+	}
+
 	fn build_default_bindings(&mut self) {
-		use action::ActionDefaultInfo;
+		use action::BindingInfo;
 
 		self.button_mappings = self.actions.iter()
 			.enumerate()
-			.filter_map(|(index, a)| match a.default_info() {
-				ActionDefaultInfo::Button(b) => Some((b, index)),
+			.filter_map(|(index, a)| match a.default_binding_info() {
+				BindingInfo::Button(b) => Some((b, index)),
 				_ => None,
 			})
-			.collect()
+			.collect();
+
+		self.mouse_sensitivity = self.actions.iter()
+			.find_map(|action| match action.default_binding_info() {
+				BindingInfo::Mouse{sensitivity} => Some(sensitivity),
+				_ => None,
+			});
 	}
 }
 
@@ -97,8 +111,8 @@ impl<'is> Builder<'is> {
 		self.new_action(Action::new_state(name, default_binding))
 	}
 
-	pub fn new_mouse(&mut self, name: impl Into<String>, sensitivity: f32) -> ActionID {
-		self.new_action(Action::new_mouse(name, sensitivity))
+	pub fn new_mouse(&mut self, name: impl Into<String>, default_sensitivity: f32) -> ActionID {
+		self.new_action(Action::new_mouse(name, default_sensitivity))
 	}
 
 	pub fn new_pointer(&mut self, name: impl Into<String>) -> ActionID {
