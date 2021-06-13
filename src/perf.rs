@@ -86,6 +86,12 @@ impl Instrumenter {
 	}
 
 
+	pub fn scoped_section(&mut self, name: &str) -> ScopedSection<'_> {
+		self.start_section(name);
+		ScopedSection(self)
+	}
+
+
 	pub fn end_frame(&mut self) {
 		if self.recording_section.is_some() {
 			self.end_section();
@@ -186,5 +192,15 @@ impl Section {
 			gl::raw::GetQueryObjectiv(self.geo_handle, gl::raw::QUERY_RESULT, &mut geo_value);
 			(timer_value as usize, geo_value as usize)
 		}
+	}
+}
+
+
+
+pub struct ScopedSection<'inst> (&'inst mut Instrumenter);
+
+impl<'inst> Drop for ScopedSection<'inst> {
+	fn drop(&mut self) {
+		self.0.end_section();
 	}
 }
