@@ -209,12 +209,15 @@ impl InputSystem {
 	}
 
 	pub fn leave_context(&mut self, context_id: ContextID) {
-		match self.active_contexts.iter().position(|&id| id == context_id) {
-			Some(context_pos) => { self.active_contexts.remove(context_pos); }
-			None => panic!("Leaving inactive context"),
+		if let Some(context_pos) = self.active_contexts.iter().position(|&id| id == context_id) {
+			self.active_contexts.remove(context_pos);
 		}
 
 		self.active_contexts_changed = true;
+	}
+
+	pub fn is_context_active(&self, context_id: ContextID) -> bool {
+		self.active_contexts.contains(&context_id)
 	}
 
 	pub fn frame_state(&self) -> &FrameState {
@@ -249,7 +252,7 @@ enum ActionState {
 /// The complete state of input for a frame - after system inputs have been parsed into actions
 #[derive(Clone, Debug, Default)]
 pub struct FrameState {
-	/// All the triggers that were activated this frame
+	/// All the button actions that are active or that changed this frame
 	button: HashMap<ActionID, ActionState>,
 
 	/// Mouse state if it is currently available, and the action its bound to
