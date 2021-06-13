@@ -1,3 +1,5 @@
+use common::math::*;
+
 pub mod raw {
 	include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }

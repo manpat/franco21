@@ -5,6 +5,7 @@ pub mod gl;
 pub mod perf;
 pub mod window;
 pub mod input;
+pub mod audio;
 
 pub use crate::prelude::*;
 
@@ -16,6 +17,7 @@ pub struct Engine {
 	pub window: sdl2::video::Window,
 	pub gl_ctx: gl::Context,
 	pub input: input::InputSystem,
+	pub audio: audio::AudioSystem,
 	pub instrumenter: perf::Instrumenter,
 
 	should_quit: bool,
@@ -26,10 +28,12 @@ impl Engine {
 	pub fn new(window_name: &str) -> Result<Engine, Box<dyn Error>> {
 		let sdl_ctx = sdl2::init()?;
 		let sdl_video = sdl_ctx.video()?;
+		let sdl_audio = sdl_ctx.audio()?;
 
 		let (window, gl_ctx) = window::init_window(&sdl_video, window_name)?;
 		let event_pump = sdl_ctx.event_pump()?;
 		let input = input::InputSystem::new(sdl_ctx.mouse());
+		let audio = audio::AudioSystem::new(sdl_audio)?;
 
 		let instrumenter = perf::Instrumenter::new(&gl_ctx);
 
@@ -39,6 +43,7 @@ impl Engine {
 			window,
 			gl_ctx,
 			input,
+			audio,
 			instrumenter,
 
 			should_quit: false,
@@ -55,7 +60,7 @@ impl Engine {
 
 			match event {
 				Event::Quit {..} => { self.should_quit = true }
-				Event::Window{ win_event: WindowEvent::Resized(..), .. } => unsafe {
+				Event::Window{ win_event: WindowEvent::Resized(..), .. } => {
 					let (w, h) = self.window.drawable_size();
 					self.gl_ctx.on_resize(w, h);
 					self.input.handle_event(&event)
@@ -69,6 +74,11 @@ impl Engine {
 	}
 
 	pub fn end_frame(&mut self) {
+		{
+			let _guard = self.instrumenter.scoped_section("audio");
+			self.audio.update();
+		}
+
 		self.instrumenter.end_frame();
 		self.window.gl_swap_window();
 	}
