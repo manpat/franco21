@@ -1,5 +1,5 @@
 use crate::input::raw;
-use crate::input::action::{self, ActionID};
+use crate::input::action::{self, Action, ActionID};
 use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -15,7 +15,7 @@ pub struct InputContext {
 	name: String,
 	id: ContextID,
 
-	actions: Vec<action::Action>,
+	actions: Vec<Action>,
 
 	/// The active bindings from buttons to an action index
 	button_mappings: HashMap<raw::Button, usize>,
@@ -31,7 +31,7 @@ impl InputContext {
 		}
 	}
 
-	pub fn mouse_action(&self) -> Option<(&action::Action, ActionID)> {
+	pub fn mouse_action(&self) -> Option<(&Action, ActionID)> {
 		let context_id = self.id;
 
 		self.actions.iter()
@@ -40,7 +40,7 @@ impl InputContext {
 			.map(|(index, action)| (action, ActionID {context_id, index}))
 	}
 
-	pub fn action_for_button(&self, button: raw::Button) -> Option<(&action::Action, ActionID)> {
+	pub fn action_for_button(&self, button: raw::Button) -> Option<(&Action, ActionID)> {
 		let context_id = self.id;
 
 		self.button_mappings.get(&button)
@@ -80,13 +80,28 @@ impl<'is> Builder<'is> {
 		self.context.id
 	}
 
-	pub fn new_action(&mut self, action: action::Action) -> action::ActionID {
+	pub fn new_action(&mut self, action: Action) -> ActionID {
 		self.context.actions.push(action);
 
-		action::ActionID {
+		ActionID {
 			context_id: self.context.id,
 			index: self.context.actions.len()-1,
 		}
 	}
 
+	pub fn new_trigger(&mut self, name: impl Into<String>, default_binding: impl Into<raw::Button>) -> ActionID {
+		self.new_action(Action::new_trigger(name, default_binding))
+	}
+
+	pub fn new_state(&mut self, name: impl Into<String>, default_binding: impl Into<raw::Button>) -> ActionID {
+		self.new_action(Action::new_state(name, default_binding))
+	}
+
+	pub fn new_mouse(&mut self, name: impl Into<String>, sensitivity: f32) -> ActionID {
+		self.new_action(Action::new_mouse(name, sensitivity))
+	}
+
+	pub fn new_pointer(&mut self, name: impl Into<String>) -> ActionID {
+		self.new_action(Action::new_pointer(name))
+	}
 }
