@@ -7,7 +7,9 @@ edition = "2018"
 [dependencies]
 sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 common = { git = "https://github.com/manpat/common-rs.git" }
+# common = { path = "../common-rs" }
 toy = { git = "https://github.com/manpat/toy-rs.git" }
+lewton = "0.10.*"
 
 [build-dependencies]
 gl_generator = "0.14.0"
