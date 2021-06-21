@@ -1,10 +1,10 @@
 use crate::prelude::*;
-use std::io::Cursor;
+use std::io::{self, Cursor, BufReader};
+use std::fs::File;
 
 use crate::audio::buffer::Buffer;
 
 use lewton::inside_ogg::OggStreamReader;
-use lewton::samples::Sample;
 
 pub struct Stream {
 	reader: OggStreamReader<StreamSource>,
@@ -37,9 +37,9 @@ impl Stream {
 	}
 
 	pub fn from_vorbis_file(filepath: impl AsRef<std::path::Path>) -> Result<Stream, Box<dyn Error>> {
-		let file = std::fs::File::open(filepath)?;
+		let file = File::open(filepath)?;
 
-		let source = StreamSource::File(file);
+		let source = StreamSource::File(BufReader::new(file));
 		let reader = OggStreamReader::new(source)?;
 
 		assert!(reader.ident_hdr.audio_sample_rate == 44100);
@@ -76,11 +76,11 @@ impl Stream {
 
 enum StreamSource {
 	Static(Cursor<&'static [u8]>),
-	File(std::fs::File),
+	File(BufReader<File>),
 }
 
-impl std::io::Read for StreamSource {
-	fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+impl io::Read for StreamSource {
+	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
 		match self {
 			StreamSource::Static(cur) => cur.read(buf),
 			StreamSource::File(file) => file.read(buf),
@@ -89,8 +89,8 @@ impl std::io::Read for StreamSource {
 }
 
 
-impl std::io::Seek for StreamSource {
-	fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+impl io::Seek for StreamSource {
+	fn seek(&mut self, pos: io::SeekFrom) -> io::Result<u64> {
 		match self {
 			StreamSource::Static(cur) => cur.seek(pos),
 			StreamSource::File(file) => file.seek(pos),
