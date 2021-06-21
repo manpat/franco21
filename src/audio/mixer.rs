@@ -1,6 +1,7 @@
 
 use crate::audio::buffer::Buffer;
 
+pub const NUM_CHANNELS: usize = 2;
 
 pub struct Mixer {
 	mix_buffer: Vec<f32>,
@@ -8,14 +9,14 @@ pub struct Mixer {
 }
 
 impl Mixer {
-	pub fn new(buffer_size: usize) -> Mixer {
+	pub fn new(buffer_samples: usize) -> Mixer {
 		Mixer {
-			mix_buffer: vec![0.0; buffer_size],
+			mix_buffer: vec![0.0; buffer_samples * NUM_CHANNELS],
 			gain: 0.2,
 		}
 	}
 
-	pub fn buffer_size(&self) -> usize { self.mix_buffer.len() }
+	pub fn buffer_samples(&self) -> usize { self.mix_buffer.len() / NUM_CHANNELS }
 
 	pub fn clear(&mut self) {
 		for sample in self.mix_buffer.iter_mut() {
@@ -24,8 +25,8 @@ impl Mixer {
 	}
 
 	pub fn mix_buffer(&mut self, buffer: &Buffer, position: usize) -> usize {
-		let buffer_size = buffer.data.len() / buffer.channels;
-		let buffer_remaining = buffer_size - position;
+		let buffer_samples = buffer.data.len() / buffer.channels;
+		let buffer_remaining = buffer_samples - position;
 		let buffer_consumption = buffer_remaining.min(self.mix_buffer.len() / 2);
 
 		let mix_chunks = self.mix_buffer.array_chunks_mut::<2>();

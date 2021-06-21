@@ -75,6 +75,7 @@ impl Engine {
 
 	pub fn end_frame(&mut self) {
 		{
+			// TODO(pat.m): should probably add CPU timing to Instrumenter so that this actually makes sense
 			let _guard = self.instrumenter.scoped_section("audio");
 			self.audio.update();
 		}

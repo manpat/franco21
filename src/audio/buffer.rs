@@ -4,6 +4,7 @@ use std::io::Cursor;
 use lewton::inside_ogg::OggStreamReader;
 use lewton::samples::Sample;
 
+/// A complete sound ready to be played in its entirety
 pub struct Buffer {
 	pub data: Vec<i16>,
 	pub channels: usize,
@@ -47,5 +48,9 @@ impl Buffer {
 
 	pub fn from_stereo_samples(data: impl Iterator<Item=f32>) -> Buffer {
 		Buffer::from_samples(data, 2)
+	}
+
+	pub fn samples(&self) -> usize {
+		self.data.len() / self.channels
 	}
 }
