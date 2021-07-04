@@ -6,7 +6,7 @@ use crate::audio::buffer::Buffer;
 
 use lewton::inside_ogg::OggStreamReader;
 
-pub struct Stream {
+pub struct FileStream {
 	reader: OggStreamReader<StreamSource>,
 
 	/// Samples that have already been read from the stream
@@ -16,8 +16,8 @@ pub struct Stream {
 	pub fully_resident: bool,
 }
 
-impl Stream {
-	pub fn from_vorbis_static(data: &'static [u8]) -> Result<Stream, Box<dyn Error>> {
+impl FileStream {
+	pub fn from_vorbis_static(data: &'static [u8]) -> Result<FileStream, Box<dyn Error>> {
 		let source = StreamSource::Static(Cursor::new(data));
 		let reader = OggStreamReader::new(source)?;
 
@@ -29,14 +29,14 @@ impl Stream {
 			channels: reader.ident_hdr.audio_channels as usize,
 		};
 
-		Ok(Stream {
+		Ok(FileStream {
 			reader,
 			resident_buffer,
 			fully_resident: false,
 		})
 	}
 
-	pub fn from_vorbis_file(filepath: impl AsRef<std::path::Path>) -> Result<Stream, Box<dyn Error>> {
+	pub fn from_vorbis_file(filepath: impl AsRef<std::path::Path>) -> Result<FileStream, Box<dyn Error>> {
 		let file = File::open(filepath)?;
 
 		let source = StreamSource::File(BufReader::new(file));
@@ -50,7 +50,7 @@ impl Stream {
 			channels: reader.ident_hdr.audio_channels as usize,
 		};
 
-		Ok(Stream {
+		Ok(FileStream {
 			reader,
 			resident_buffer,
 			fully_resident: false,
