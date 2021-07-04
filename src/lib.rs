@@ -66,7 +66,9 @@ impl Engine {
 					self.input.handle_event(&event)
 				}
 
-				_ => self.input.handle_event(&event),
+				_ => {
+					self.input.handle_event(&event)
+				},
 			}
 		}
 

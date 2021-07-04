@@ -224,6 +224,15 @@ impl InputSystem {
 		&self.frame_state
 	}
 
+	pub fn contexts(&self) -> impl Iterator<Item = &'_ InputContext> {
+		self.contexts.iter()
+	}
+
+	pub fn active_contexts(&self) -> impl Iterator<Item = &'_ InputContext> {
+		self.active_contexts.iter()
+			.filter_map(move |id| self.contexts.get(id.0))
+	}
+
 	fn track_button_change(&mut self, button: raw::Button, down: bool) {
 		let button_is_active = self.active_buttons.contains(&button);
 
