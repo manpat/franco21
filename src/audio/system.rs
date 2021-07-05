@@ -16,6 +16,21 @@ enum SoundAssetType {
 }
 
 
+#[derive(Copy, Clone, Debug)]
+struct SoundInstance {
+	asset_id: SoundAssetID,
+	position: usize,
+}
+
+
+struct StreamUpdateRequest {
+	index: usize,
+	position: usize,
+}
+
+
+
+
 pub struct AudioSystem {
 	audio_queue: sdl2::audio::AudioQueue<f32>,
 	buffers: Vec<Buffer>,
@@ -169,18 +184,3 @@ impl AudioSystem {
 		}
 	}
 }
-
-
-
-#[derive(Copy, Clone, Debug)]
-struct SoundInstance {
-	asset_id: SoundAssetID,
-	position: usize,
-}
-
-
-struct StreamUpdateRequest {
-	index: usize,
-	position: usize,
-}
-
