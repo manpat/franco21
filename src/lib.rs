@@ -1,7 +1,7 @@
 #![feature(backtrace, array_chunks)]
 
 pub mod prelude;
-pub mod gl;
+pub mod gfx;
 pub mod perf;
 pub mod window;
 pub mod input;
@@ -15,7 +15,7 @@ pub struct Engine {
 	pub sdl_ctx: sdl2::Sdl,
 	pub event_pump: sdl2::EventPump,
 	pub window: sdl2::video::Window,
-	pub gl_ctx: gl::Context,
+	pub gfx: gfx::Context,
 	pub input: input::InputSystem,
 	pub audio: audio::AudioSystem,
 	pub instrumenter: perf::Instrumenter,
@@ -30,18 +30,18 @@ impl Engine {
 		let sdl_video = sdl_ctx.video()?;
 		let sdl_audio = sdl_ctx.audio()?;
 
-		let (window, gl_ctx) = window::init_window(&sdl_video, window_name)?;
+		let (window, gfx) = window::init_window(&sdl_video, window_name)?;
 		let event_pump = sdl_ctx.event_pump()?;
-		let input = input::InputSystem::new(sdl_ctx.mouse());
+		let input = input::InputSystem::new(sdl_ctx.mouse(), &window);
 		let audio = audio::AudioSystem::new(sdl_audio)?;
 
-		let instrumenter = perf::Instrumenter::new(&gl_ctx);
+		let instrumenter = perf::Instrumenter::new(&gfx);
 
 		Ok(Engine {
 			sdl_ctx,
 			event_pump,
 			window,
-			gl_ctx,
+			gfx,
 			input,
 			audio,
 			instrumenter,
@@ -62,7 +62,7 @@ impl Engine {
 				Event::Quit {..} => { self.should_quit = true }
 				Event::Window{ win_event: WindowEvent::Resized(..), .. } => {
 					let (w, h) = self.window.drawable_size();
-					self.gl_ctx.on_resize(w, h);
+					self.gfx.on_resize(w, h);
 					self.input.handle_event(&event)
 				}
 
@@ -83,6 +83,10 @@ impl Engine {
 		}
 
 		self.instrumenter.end_frame();
-		self.window.gl_swap_window();
+
+		{
+			let _guard = self.instrumenter.scoped_section("swap");
+			self.window.gl_swap_window();
+		}
 	}
 }

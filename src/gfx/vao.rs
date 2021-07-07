@@ -1,4 +1,4 @@
-use crate::gl::{self, raw};
+use crate::gfx::{self, raw};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vao {
@@ -15,20 +15,20 @@ impl Vao {
 	}
 
 
-	pub fn bind_index_buffer(&self, index_buffer: impl Into<gl::UntypedBuffer>) {
+	pub fn bind_index_buffer(&self, index_buffer: impl Into<gfx::UntypedBuffer>) {
 		unsafe {
 			raw::VertexArrayElementBuffer(self.handle, index_buffer.into().0);
 		}
 	}
 
-	pub fn bind_vertex_buffer<V: gl::Vertex>(&self, binding: u32, vertex_buffer: gl::Buffer<V>) {
+	pub fn bind_vertex_buffer<V: gfx::Vertex>(&self, binding: u32, vertex_buffer: gfx::Buffer<V>) {
 		let descriptor = V::descriptor();
 		let stride = descriptor.size_bytes as i32;
 
 		for (attribute_index, attribute) in descriptor.attributes.iter().enumerate() {
 			let attribute_index = attribute_index as u32;
 
-			let &gl::vertex::Attribute{
+			let &gfx::vertex::Attribute{
 				offset_bytes,
 				num_elements,
 				gl_type,

@@ -9,17 +9,22 @@ pub mod buffer;
 pub mod texture;
 pub mod vertex;
 pub mod shader;
+pub mod query;
+pub mod capabilities;
 
 pub use self::vao::*;
 pub use self::buffer::*;
 pub use self::texture::*;
 pub use self::vertex::*;
 pub use self::shader::*;
+pub use self::query::*;
+pub use self::capabilities::*;
 
 
 pub struct Context {
 	_sdl_ctx: sdl2::video::GLContext,
 	shader_manager: ShaderManager,
+	capabilities: Capabilities,
 
 	canvas_size: Vec2i,
 }
@@ -67,6 +72,7 @@ impl Context {
 		Context {
 			_sdl_ctx: sdl_ctx,
 			shader_manager: ShaderManager::new(),
+			capabilities: Capabilities::new(),
 
 			canvas_size: Vec2i::splat(1),
 		}
@@ -81,6 +87,8 @@ impl Context {
 
 
 	pub fn canvas_size(&self) -> Vec2i { self.canvas_size }
+
+	pub fn capabilities(&self) -> &Capabilities { &self.capabilities }
 
 
 	pub fn set_wireframe(&self, wireframe_enabled: bool) {
@@ -121,6 +129,14 @@ impl Context {
 			let mut vao = 0;
 			raw::CreateVertexArrays(1, &mut vao);
 			Vao::new(vao)
+		}
+	}
+
+	pub fn new_query(&self) -> QueryObject {
+		unsafe {
+			let mut handle = 0;
+			raw::GenQueries(1, &mut handle);
+			QueryObject(handle)
 		}
 	}
 

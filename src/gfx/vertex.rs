@@ -1,5 +1,5 @@
 use common::math::*;
-use crate::gl;
+use crate::gfx;
 
 
 pub trait Vertex: Copy {
@@ -32,10 +32,10 @@ impl AttributeType {
 		use AttributeType::*;
 
 		let gl_type = match self {
-			Float => gl::raw::FLOAT,
-			Vec2 => gl::raw::FLOAT,
-			Vec3 => gl::raw::FLOAT,
-			Vec4 => gl::raw::FLOAT,
+			Float => gfx::raw::FLOAT,
+			Vec2 => gfx::raw::FLOAT,
+			Vec3 => gfx::raw::FLOAT,
+			Vec4 => gfx::raw::FLOAT,
 		};
 
 		let num_elements = match self {

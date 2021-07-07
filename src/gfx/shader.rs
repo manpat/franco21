@@ -1,4 +1,4 @@
-use crate::gl;
+use crate::gfx;
 use std::error::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -55,26 +55,26 @@ fn compile_shaders(shaders: &[(u32, &str)], imports: &HashMap<String, String>) -
 	use std::str;
 
 	unsafe {
-		let program_handle = gl::raw::CreateProgram();
+		let program_handle = gfx::raw::CreateProgram();
 
 		for &(ty, src) in shaders.iter() {
 			let src = resolve_imports(&src, imports);
 			let src = CString::new(src.as_bytes()).unwrap();
 
-			let shader_handle = gl::raw::CreateShader(ty);
+			let shader_handle = gfx::raw::CreateShader(ty);
 
-			gl::raw::ShaderSource(shader_handle, 1, &src.as_ptr(), std::ptr::null());
-			gl::raw::CompileShader(shader_handle);
+			gfx::raw::ShaderSource(shader_handle, 1, &src.as_ptr(), std::ptr::null());
+			gfx::raw::CompileShader(shader_handle);
 
 			let mut status = 0;
-			gl::raw::GetShaderiv(shader_handle, gl::raw::COMPILE_STATUS, &mut status);
+			gfx::raw::GetShaderiv(shader_handle, gfx::raw::COMPILE_STATUS, &mut status);
 
 			if status == 0 {
 				let mut length = 0;
-				gl::raw::GetShaderiv(shader_handle, gl::raw::INFO_LOG_LENGTH, &mut length);
+				gfx::raw::GetShaderiv(shader_handle, gfx::raw::INFO_LOG_LENGTH, &mut length);
 
 				let mut buffer = vec![0u8; length as usize];
-				gl::raw::GetShaderInfoLog(
+				gfx::raw::GetShaderInfoLog(
 					shader_handle,
 					length,
 					std::ptr::null_mut(),
@@ -87,19 +87,19 @@ fn compile_shaders(shaders: &[(u32, &str)], imports: &HashMap<String, String>) -
 				return Err(CompilationError::new("shader compilation", error));
 			}
 
-			gl::raw::AttachShader(program_handle, shader_handle);
-			gl::raw::DeleteShader(shader_handle);
+			gfx::raw::AttachShader(program_handle, shader_handle);
+			gfx::raw::DeleteShader(shader_handle);
 		}
 
-		gl::raw::LinkProgram(program_handle);
+		gfx::raw::LinkProgram(program_handle);
 
 		let mut status = 0;
-		gl::raw::GetProgramiv(program_handle, gl::raw::LINK_STATUS, &mut status);
+		gfx::raw::GetProgramiv(program_handle, gfx::raw::LINK_STATUS, &mut status);
 
 		if status == 0 {
 			let mut buf = [0u8; 1024];
 			let mut len = 0;
-			gl::raw::GetProgramInfoLog(program_handle, buf.len() as _, &mut len, buf.as_mut_ptr() as _);
+			gfx::raw::GetProgramInfoLog(program_handle, buf.len() as _, &mut len, buf.as_mut_ptr() as _);
 
 			let error = str::from_utf8(&buf[..len as usize])
 				.map_err(|_| CompilationError::new("shader linking", "error message invalid utf-8"))?;

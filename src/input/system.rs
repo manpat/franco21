@@ -48,13 +48,15 @@ pub struct InputSystem {
 }
 
 impl InputSystem {
-	pub(crate) fn new(sdl2_mouse: sdl2::mouse::MouseUtil) -> InputSystem {
+	pub(crate) fn new(sdl2_mouse: sdl2::mouse::MouseUtil, window: &sdl2::video::Window) -> InputSystem {
+		let (w, h) = window.drawable_size();
+
 		InputSystem {
 			contexts: Vec::new(),
 			active_contexts: Vec::new(),
 			active_contexts_changed: false,
 
-			mouse_interactive_region: Vec2::splat(1.0),
+			mouse_interactive_region: Vec2::new(w as f32, h as f32),
 
 			mouse_absolute: None,
 			mouse_delta: None,
@@ -91,6 +93,7 @@ impl InputSystem {
 
 		match event {
 			&Event::Window{ win_event: WindowEvent::Resized(w, h), .. } => {
+				// TODO(pat.m): this event doesn't get emitted on startup
 				self.mouse_interactive_region = Vec2::new(w as f32, h as f32);
 			}
 

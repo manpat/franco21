@@ -1,4 +1,6 @@
-use crate::gl;
+use crate::gfx;
+
+use std::time;
 
 
 #[derive(Copy, Clone, Debug)]
@@ -19,7 +21,8 @@ pub struct Instrumenter {
 #[derive(Clone, Debug)]
 pub struct Summary {
 	pub total_triangles: usize,
-	pub total_time_ms: f64,
+	pub total_gpu_time_ms: f64,
+	pub total_cpu_time_ms: f64,
 	pub sections: Vec<SectionSummary>,
 }
 
@@ -27,12 +30,17 @@ pub struct Summary {
 pub struct SectionSummary {
 	pub name: String,
 	pub triangles: usize,
-	pub time_ms: f64,
+	pub gpu_time_ms: f64,
+	pub cpu_time_ms: f64,
 }
 
 
+// TODO(pat.m): queries for total frame time/geometry - use indexed queries
 impl Instrumenter {
-	pub fn new(gl_ctx: &gl::Context) -> Instrumenter {
+	pub fn new(gl_ctx: &gfx::Context) -> Instrumenter {
+		assert!(gl_ctx.capabilities().max_simultaneous_primitive_queries > 0);
+		assert!(gl_ctx.capabilities().max_simultaneous_time_elapsed_queries > 0);
+
 		let mut section_cache = Vec::new();
 
 		for _ in 0..20 {
@@ -77,10 +85,10 @@ impl Instrumenter {
 			State::Waiting => return,
 		};
 
-		let section = self.recording_section.take()
+		let mut section = self.recording_section.take()
 			.expect("Mismatched start/end query section!");
 
-		Section::end();
+		section.end();
 
 		self.waiting_sections.push(section);
 	}
@@ -99,26 +107,31 @@ impl Instrumenter {
 
 		self.state = State::Waiting;
 
-		let queries_ready = self.waiting_sections.iter()
-			.all(&Section::ready);
+		let queries_ready = self.waiting_sections.iter_mut()
+			.map(Section::result)
+			.all(|r| r.is_some());
 
 		if queries_ready {
-			let mut total_time_ms = 0.0f64;
+			let mut total_gpu_time_ms = 0.0f64;
+			let mut total_cpu_time_ms = 0.0f64;
 			let mut total_triangles = 0usize;
 
 			let mut sections = Vec::with_capacity(self.waiting_sections.len());
 
 			for mut section in self.waiting_sections.drain(..) {
-				let (time_nanos, triangles) = section.result();
-				let time_ms = time_nanos as f64 / 1000_000.0;
+				let (time_nanos, triangles, duration) = section.result().unwrap();
+				let gpu_time_ms = time_nanos as f64 / 1000_000.0;
+				let cpu_time_ms = duration.as_secs_f64() * 1000.0;
 
 				sections.push(SectionSummary {
 					name: std::mem::take(&mut section.name),
 					triangles,
-					time_ms,
+					gpu_time_ms,
+					cpu_time_ms,
 				});
 
-				total_time_ms += time_ms;
+				total_gpu_time_ms += gpu_time_ms;
+				total_cpu_time_ms += cpu_time_ms;
 				total_triangles += triangles;
 
 				self.section_cache.push(section);
@@ -126,7 +139,8 @@ impl Instrumenter {
 
 			self.summary = Some(Summary {
 				total_triangles,
-				total_time_ms,
+				total_gpu_time_ms,
+				total_cpu_time_ms,
 				sections,
 			});
 
@@ -140,58 +154,57 @@ impl Instrumenter {
 
 struct Section {
 	name: String,
-	timer_handle: u32,
-	geo_handle: u32,
+	timer_query_object: gfx::QueryObject,
+	geo_query_object: gfx::QueryObject,
+
+	timer_query: Option<gfx::InFlightQuery>,
+	geo_query: Option<gfx::InFlightQuery>,
+
+	start_time: time::Instant,
+	end_time: time::Instant,
 }
 
 impl Section {
-	fn new(_gl_ctx: &gl::Context) -> Section {
-		unsafe {
-			let mut handles = [0; 2];
-			gl::raw::GenQueries(2, handles.as_mut_ptr());
+	fn new(gl_ctx: &gfx::Context) -> Section {
+		Section {
+			name: String::new(),
+			timer_query_object: gl_ctx.new_query(),
+			geo_query_object: gl_ctx.new_query(),
 
-			let [timer_handle, geo_handle] = handles;
-			Section {
-				name: String::new(),
-				timer_handle,
-				geo_handle,
-			}
+			timer_query: None,
+			geo_query: None,
+
+			start_time: time::Instant::now(),
+			end_time: time::Instant::now(),
 		}
 	}
 
 	fn start(&mut self, name: String) {
-		unsafe {
-			self.name = name;
-			gl::raw::BeginQuery(gl::raw::PRIMITIVES_GENERATED, self.geo_handle);
-			gl::raw::BeginQuery(gl::raw::TIME_ELAPSED, self.timer_handle);
-		}
+		self.timer_query = Some(self.timer_query_object.start_query(gfx::QueryType::Timer));
+		self.geo_query = Some(self.geo_query_object.start_query(gfx::QueryType::Primitive));
+
+		self.name = name;
+		self.start_time = time::Instant::now();
 	}
 
-	fn end() {
-		unsafe {
-			gl::raw::EndQuery(gl::raw::PRIMITIVES_GENERATED);
-			gl::raw::EndQuery(gl::raw::TIME_ELAPSED);
+	fn end(&mut self) {
+		if let Some(query) = self.timer_query.as_mut() {
+			query.end_query();
 		}
+
+		if let Some(query) = self.geo_query.as_mut() {
+			query.end_query();
+		}
+
+		self.end_time = time::Instant::now();
 	}
 
-	fn ready(&self) -> bool {
-		unsafe {
-			let mut timer_ready = 0;
-			let mut geo_ready = 0;
-			gl::raw::GetQueryObjectiv(self.timer_handle, gl::raw::QUERY_RESULT_AVAILABLE, &mut timer_ready);
-			gl::raw::GetQueryObjectiv(self.geo_handle, gl::raw::QUERY_RESULT_AVAILABLE, &mut geo_ready);
-			(timer_ready != 0) && (geo_ready != 0)
-		}
-	}
+	fn result(&mut self) -> Option<(usize, usize, time::Duration)> {
+		let timer_value = self.timer_query.as_mut().and_then(gfx::InFlightQuery::query_result)?;
+		let geo_value = self.geo_query.as_mut().and_then(gfx::InFlightQuery::query_result)?;
 
-	fn result(&self) -> (usize, usize) {
-		unsafe {
-			let mut timer_value = 0;
-			let mut geo_value = 0;
-			gl::raw::GetQueryObjectiv(self.timer_handle, gl::raw::QUERY_RESULT, &mut timer_value);
-			gl::raw::GetQueryObjectiv(self.geo_handle, gl::raw::QUERY_RESULT, &mut geo_value);
-			(timer_value as usize, geo_value as usize)
-		}
+		let duration = self.end_time.saturating_duration_since(self.start_time);
+		Some((timer_value as usize, geo_value as usize, duration))
 	}
 }
 
@@ -204,3 +217,4 @@ impl<'inst> Drop for ScopedSection<'inst> {
 		self.0.end_section();
 	}
 }
+

@@ -1,4 +1,4 @@
-use crate::gl;
+use crate::gfx;
 use std::marker::PhantomData;
 
 #[derive(Copy, Clone, Debug)]
@@ -54,15 +54,15 @@ fn upload_untyped<T: Copy>(handle: u32, data: &[T], usage: BufferUsage) {
 	assert!(!data.is_empty());
 
 	let usage = match usage {
-		BufferUsage::Static => gl::raw::STATIC_DRAW,
-		BufferUsage::Dynamic => gl::raw::DYNAMIC_DRAW,
-		BufferUsage::Stream => gl::raw::STREAM_DRAW,
+		BufferUsage::Static => gfx::raw::STATIC_DRAW,
+		BufferUsage::Dynamic => gfx::raw::DYNAMIC_DRAW,
+		BufferUsage::Stream => gfx::raw::STREAM_DRAW,
 	};
 
 	let size_bytes = data.len() * std::mem::size_of::<T>();
 
 	unsafe {
-		gl::raw::NamedBufferData(
+		gfx::raw::NamedBufferData(
 			handle,
 			size_bytes as _,
 			data.as_ptr() as *const _,
