@@ -20,7 +20,7 @@ pub struct Buffer<T: Copy> {
 
 
 impl UntypedBuffer {
-	pub fn upload<T: Copy>(&self, data: &[T], usage: BufferUsage) {
+	pub fn upload<T: Copy>(&mut self, data: &[T], usage: BufferUsage) {
 		upload_untyped(self.0, data, usage);
 	}
 
@@ -34,7 +34,7 @@ impl UntypedBuffer {
 
 
 impl<T: Copy> Buffer<T> {
-	pub fn upload(&self, data: &[T], usage: BufferUsage) {
+	pub fn upload(&mut self, data: &[T], usage: BufferUsage) {
 		upload_untyped(self.handle, data, usage);
 	}
 }
