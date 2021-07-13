@@ -194,6 +194,12 @@ impl Context {
 		}
 	}
 
+	pub fn draw_instances_indexed(&self, draw_mode: DrawMode, num_elements: u32, num_instances: u32) {
+		unsafe {
+			raw::DrawElementsInstanced(draw_mode.into_gl(), num_elements as i32, raw::UNSIGNED_SHORT, std::ptr::null(), num_instances as i32);
+		}
+	}
+
 	pub fn draw_arrays(&self, draw_mode: DrawMode, num_vertices: u32) {
 		unsafe {
 			raw::DrawArrays(draw_mode.into_gl(), 0, num_vertices as i32);
