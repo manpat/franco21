@@ -37,6 +37,15 @@ pub enum DrawMode {
 }
 
 
+bitflags::bitflags! {
+	pub struct ClearMode : u32 {
+		const COLOR = 0b001;
+		const DEPTH = 0b010;
+		const STENCIL = 0b100;
+		const ALL = 0b111;
+	}
+}
+
 
 impl Context {
 	pub fn new(sdl_ctx: sdl2::video::GLContext) -> Self {
@@ -87,6 +96,10 @@ impl Context {
 
 
 	pub fn canvas_size(&self) -> Vec2i { self.canvas_size }
+	pub fn aspect(&self) -> f32 {
+		let Vec2{x, y} = self.canvas_size().to_vec2();
+		x / y
+	}
 
 	pub fn capabilities(&self) -> &Capabilities { &self.capabilities }
 
@@ -182,11 +195,39 @@ impl Context {
 		self.shader_manager.get_shader(shaders)
 	}
 
+	pub fn new_simple_shader(&self, vsrc: &str, fsrc: &str) -> Result<Shader, shader::CompilationError> {
+		self.shader_manager.get_shader(&[
+			(raw::VERTEX_SHADER, vsrc),
+			(raw::FRAGMENT_SHADER, fsrc),
+		])
+	}
+
+	pub fn new_compute_shader(&self, csrc: &str) -> Result<Shader, shader::CompilationError> {
+		self.shader_manager.get_shader(&[
+			(raw::COMPUTE_SHADER, csrc)
+		])
+	}
+
 	pub fn bind_shader(&self, shader: Shader) {
 		unsafe {
 			raw::UseProgram(shader.0);
 		}
 	}
+
+
+	pub fn set_clear_color(&self, color: impl Into<Color>) {
+		let (r,g,b,a) = color.into().to_tuple();
+		unsafe {
+			raw::ClearColor(r, g, b, a);
+		}
+	}
+
+	pub fn clear(&self, mode: ClearMode) {
+		unsafe {
+			raw::Clear(mode.into_gl());
+		}
+	}
+
 
 	pub fn draw_indexed(&self, draw_mode: DrawMode, num_elements: u32) {
 		unsafe {
@@ -225,6 +266,15 @@ impl DrawMode {
 	}
 }
 
+impl ClearMode {
+	fn into_gl(self) -> u32 {
+		let mut gl_value = 0;
+		if self.contains(Self::COLOR) { gl_value |= raw::COLOR_BUFFER_BIT }
+		if self.contains(Self::DEPTH) { gl_value |= raw::DEPTH_BUFFER_BIT }
+		if self.contains(Self::STENCIL) { gl_value |= raw::STENCIL_BUFFER_BIT }
+		gl_value
+	}
+}
 
 
 extern "system" fn gl_message_callback(source: u32, ty: u32, _id: u32, severity: u32,
