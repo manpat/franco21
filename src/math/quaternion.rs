@@ -2,6 +2,7 @@ use std::ops::{Add, Mul};
 use crate::matrix::*;
 use crate::vector::*;
 use crate::easing::*;
+use std::f32::consts::PI;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Quat{pub x: f32, pub y: f32, pub z: f32, pub w: f32}
@@ -39,7 +40,7 @@ impl Quat {
 	}
 
 	pub fn from_roll(roll: f32) -> Quat {
-		Quat::new(Vec3::from_z(-1.0), roll)
+		Quat::new(Vec3::from_z(1.0), roll)
 	}
 
 	pub fn forward(&self) -> Vec3 { *self * Vec3::from_z(-1.0) }
@@ -94,20 +95,20 @@ impl Quat {
 		siny_cosp.atan2(cosy_cosp)
 	}
 
-	// pub fn roll(&self) -> f32 {
-	// 	let sinr_cosp = 2.0 * (self.w * self.z + self.x * self.y);
-	// 	let cosr_cosp = 1.0 - 2.0 * (self.z * self.z + self.x * self.x);
-	// 	sinr_cosp.atan2(cosr_cosp)
-	// }
+	pub fn roll(&self) -> f32 {
+		let sinr_cosp = 2.0 * (self.w * self.z + self.x * self.y);
+		let cosr_cosp = 1.0 - 2.0 * (self.z * self.z + self.x * self.x);
+		sinr_cosp.atan2(cosr_cosp)
+	}
 
-	// pub fn pitch(&self) -> f32 {
-	// 	let sinp = 2.0 * (self.w * self.x - self.y * self.z);
-	// 	if sinp.abs() >= 1.0 {
-	// 		(PI / 2.0).copysign(sinp) // use 90 degrees if out of range
-	// 	} else {
-	// 		sinp.asin()
-	// 	}
-	// }
+	pub fn pitch(&self) -> f32 {
+		let sinp = 2.0 * (self.w * self.x - self.y * self.z);
+		if sinp.abs() >= 1.0 {
+			(PI / 2.0).copysign(sinp) // use 90 degrees if out of range
+		} else {
+			sinp.asin()
+		}
+	}
 }
 
 
@@ -183,4 +184,102 @@ impl Ease<Quat> for f32 {
 	impl_ease_for_quat!(ease_bounce_in);
 	impl_ease_for_quat!(ease_bounce_out);
 	impl_ease_for_quat!(ease_bounce_inout);
+}
+
+
+#[cfg(test)]
+mod tests {
+	use crate::*;
+
+	#[test]
+	fn test_from_pitch() {
+		let ident = Quat::from_pitch(0.0);
+		assert_vec_eq!(ident.forward(), Vec3::from_z(-1.0));
+		assert_vec_eq!(ident.right(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.up(), Vec3::from_y(1.0));
+		assert_almost_eq!(ident.yaw(), 0.0);
+		assert_almost_eq!(ident.pitch(), 0.0);
+		assert_almost_eq!(ident.roll(), 0.0);
+
+		let r90 = Quat::from_pitch(PI/2.0);
+		assert_vec_eq!(r90.forward(), Vec3::from_y(1.0));
+		assert_vec_eq!(r90.right(), Vec3::from_x(1.0));
+		assert_vec_eq!(r90.up(), Vec3::from_z(1.0));
+		assert_almost_eq!(r90.yaw(), 0.0);
+		assert_almost_eq!(r90.pitch(), PI/2.0);
+		assert_almost_eq!(r90.roll(), 0.0);
+
+		let r180 = Quat::from_pitch(PI);
+		assert_vec_eq!(r180.forward(), Vec3::from_z(1.0));
+		assert_vec_eq!(r180.right(), Vec3::from_x(1.0));
+		assert_vec_eq!(r180.up(), Vec3::from_y(-1.0));
+		// Yay for angle stability
+		// assert_almost_eq!(r180.yaw(), 0.0);
+		// assert_almost_eq!(r180.pitch(), PI);
+		// assert_almost_eq!(r180.roll(), 0.0);
+	}
+
+	#[test]
+	fn test_from_yaw() {
+		let ident = Quat::from_yaw(0.0);
+		assert_vec_eq!(ident.forward(), Vec3::from_z(-1.0));
+		assert_vec_eq!(ident.right(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.up(), Vec3::from_y(1.0));
+		assert_almost_eq!(ident.yaw(), 0.0);
+		assert_almost_eq!(ident.pitch(), 0.0);
+		assert_almost_eq!(ident.roll(), 0.0);
+
+		let r45 = Quat::from_yaw(PI/4.0);
+		assert_vec_eq!(r45.forward(), Vec3::new(-INV_SQRT_2, 0.0, -INV_SQRT_2));
+		assert_vec_eq!(r45.right(), Vec3::new(INV_SQRT_2, 0.0, -INV_SQRT_2));
+		assert_vec_eq!(r45.up(), Vec3::from_y(1.0));
+		assert_almost_eq!(r45.yaw(), PI/4.0);
+		assert_almost_eq!(r45.pitch(), 0.0);
+		assert_almost_eq!(r45.roll(), 0.0);
+
+		let r90 = Quat::from_yaw(PI/2.0);
+		assert_vec_eq!(r90.forward(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r90.right(), Vec3::from_z(-1.0));
+		assert_vec_eq!(r90.up(), Vec3::from_y(1.0));
+		assert_almost_eq!(r90.yaw(), PI/2.0);
+		assert_almost_eq!(r90.pitch(), 0.0);
+		assert_almost_eq!(r90.roll(), 0.0);
+
+		let r180 = Quat::from_yaw(PI);
+		assert_vec_eq!(r180.forward(), Vec3::from_z(1.0));
+		assert_vec_eq!(r180.right(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r180.up(), Vec3::from_y(1.0));
+		// Yay for angle stability
+		// assert_almost_eq!(r180.yaw(), PI);
+		// assert_almost_eq!(r180.pitch(), 0.0);
+		// assert_almost_eq!(r180.roll(), 0.0);
+	}
+
+	#[test]
+	fn test_from_roll() {
+		let ident = Quat::from_roll(0.0);
+		assert_vec_eq!(ident.forward(), Vec3::from_z(-1.0));
+		assert_vec_eq!(ident.right(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.up(), Vec3::from_y(1.0));
+		assert_almost_eq!(ident.yaw(), 0.0);
+		assert_almost_eq!(ident.pitch(), 0.0);
+		assert_almost_eq!(ident.roll(), 0.0);
+
+		let r90 = Quat::from_roll(PI/2.0);
+		assert_vec_eq!(r90.forward(), Vec3::from_z(-1.0));
+		assert_vec_eq!(r90.right(), Vec3::from_y(1.0));
+		assert_vec_eq!(r90.up(), Vec3::from_x(-1.0));
+		assert_almost_eq!(r90.yaw(), 0.0);
+		assert_almost_eq!(r90.pitch(), 0.0);
+		assert_almost_eq!(r90.roll(), PI/2.0);
+
+		let r180 = Quat::from_roll(PI);
+		assert_vec_eq!(r180.forward(), Vec3::from_z(-1.0));
+		assert_vec_eq!(r180.right(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r180.up(), Vec3::from_y(-1.0));
+		// Yay for angle stability
+		// assert_almost_eq!(r180.yaw(), 0.0);
+		// assert_almost_eq!(r180.pitch(), 0.0);
+		// assert_almost_eq!(r180.roll(), PI);
+	}
 }

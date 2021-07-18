@@ -62,9 +62,9 @@ impl Mat3x4 {
 		let (rx, ry) = (ph.cos(), ph.sin());
 
 		Mat3x4::new(&[
-			 rx, 0.0, -ry, t.x,
+			 rx, 0.0,  ry, t.x,
 			0.0, 1.0, 0.0, t.y, 
-			 ry, 0.0,  rx, t.z,
+			-ry, 0.0,  rx, t.z,
 		])
 	}
 	pub fn rotate_z_translate(ph: f32, t: Vec3) -> Mat3x4 {
@@ -221,5 +221,76 @@ impl Mul<Vec3> for Mat3x4 {
 			self.rows[1].dot(o4),
 			self.rows[2].dot(o4),
 		)
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use crate::*;
+
+	#[test]
+	fn test_rotate_x() {
+		let ident = Mat3x4::rotate_x(0.0);
+		assert_vec_eq!(ident.column_x(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(ident.column_z(), Vec3::from_z(1.0));
+
+		let r90 = Mat3x4::rotate_x(PI/2.0);
+		assert_vec_eq!(r90.column_x(), Vec3::from_x(1.0));
+		assert_vec_eq!(r90.column_y(), Vec3::from_z(1.0));
+		assert_vec_eq!(r90.column_z(), Vec3::from_y(-1.0));
+		assert_vec_eq!(r90 * Vec3::from_y(3.0), Vec3::from_z(3.0));
+		assert_vec_eq!(r90 * Vec3::from_x(3.0), Vec3::from_x(3.0));
+
+		let r180 = Mat3x4::rotate_x(PI);
+		assert_vec_eq!(r180.column_x(), Vec3::from_x(1.0));
+		assert_vec_eq!(r180.column_y(), Vec3::from_y(-1.0));
+		assert_vec_eq!(r180.column_z(), Vec3::from_z(-1.0));
+	}
+
+	#[test]
+	fn test_rotate_y() {
+		let ident = Mat3x4::rotate_y(0.0);
+		assert_vec_eq!(ident.column_x(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(ident.column_z(), Vec3::from_z(1.0));
+
+		let r45 = Mat3x4::rotate_y(PI/4.0);
+		assert_vec_eq!(r45.column_x(), Vec3::new(INV_SQRT_2, 0.0, -INV_SQRT_2));
+		assert_vec_eq!(r45.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(r45.column_z(), Vec3::new(INV_SQRT_2, 0.0, INV_SQRT_2));
+
+		let r90 = Mat3x4::rotate_y(PI/2.0);
+		assert_vec_eq!(r90.column_x(), Vec3::from_z(-1.0));
+		assert_vec_eq!(r90.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(r90.column_z(), Vec3::from_x(1.0));
+		assert_vec_eq!(r90 * Vec3::from_y(3.0), Vec3::from_y(3.0));
+		assert_vec_eq!(r90 * Vec3::from_x(3.0), Vec3::from_z(-3.0));
+
+		let r180 = Mat3x4::rotate_y(PI);
+		assert_vec_eq!(r180.column_x(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r180.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(r180.column_z(), Vec3::from_z(-1.0));
+	}
+
+	#[test]
+	fn test_rotate_z() {
+		let ident = Mat3x4::rotate_z(0.0);
+		assert_vec_eq!(ident.column_x(), Vec3::from_x(1.0));
+		assert_vec_eq!(ident.column_y(), Vec3::from_y(1.0));
+		assert_vec_eq!(ident.column_z(), Vec3::from_z(1.0));
+
+		let r90 = Mat3x4::rotate_z(PI/2.0);
+		assert_vec_eq!(r90.column_x(), Vec3::from_y(1.0));
+		assert_vec_eq!(r90.column_y(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r90.column_z(), Vec3::from_z(1.0));
+		assert_vec_eq!(r90 * Vec3::from_z(3.0), Vec3::from_z(3.0));
+		assert_vec_eq!(r90 * Vec3::from_x(3.0), Vec3::from_y(3.0));
+
+		let r180 = Mat3x4::rotate_z(PI);
+		assert_vec_eq!(r180.column_x(), Vec3::from_x(-1.0));
+		assert_vec_eq!(r180.column_y(), Vec3::from_y(-1.0));
+		assert_vec_eq!(r180.column_z(), Vec3::from_z(1.0));
 	}
 }
