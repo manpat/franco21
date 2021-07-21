@@ -8,7 +8,7 @@ pub fn init_window(sdl_video: &sdl2::VideoSubsystem, window_name: &str) -> Resul
 	gl_attr.set_context_version(4, 5);
 	gl_attr.set_context_flags().debug().set();
 
-	let window = sdl_video.window(window_name, 700, 700)
+	let window = sdl_video.window(window_name, 1366, 768)
 		.position_centered()
 		.resizable()
 		.opengl()

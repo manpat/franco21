@@ -30,12 +30,16 @@ impl Engine {
 		let sdl_video = sdl_ctx.video()?;
 		let sdl_audio = sdl_ctx.audio()?;
 
-		let (window, gfx) = window::init_window(&sdl_video, window_name)?;
+		let (window, mut gfx) = window::init_window(&sdl_video, window_name)?;
 		let event_pump = sdl_ctx.event_pump()?;
 		let input = input::InputSystem::new(sdl_ctx.mouse(), &window);
 		let audio = audio::AudioSystem::new(sdl_audio)?;
 
 		let instrumenter = perf::Instrumenter::new(&gfx);
+
+		// Make sure aspect is set up correctly
+		let (w, h) = window.drawable_size();
+		gfx.on_resize(w, h);
 
 		Ok(Engine {
 			sdl_ctx,
