@@ -78,9 +78,12 @@ impl Context {
 
 	pub fn new_untyped_buffer(&self) -> UntypedBuffer {
 		unsafe {
-			let mut buf = 0;
-			raw::CreateBuffers(1, &mut buf);
-			UntypedBuffer(buf)
+			let mut handle = 0;
+			raw::CreateBuffers(1, &mut handle);
+			UntypedBuffer {
+				handle,
+				size_bytes: 0,
+			}
 		}
 	}
 
@@ -117,14 +120,14 @@ impl Context {
 	pub fn bind_uniform_buffer(&self, binding: u32, buffer: impl Into<UntypedBuffer>) {
 		let buffer = buffer.into();
 		unsafe {
-			raw::BindBufferBase(raw::UNIFORM_BUFFER, binding, buffer.0);
+			raw::BindBufferBase(raw::UNIFORM_BUFFER, binding, buffer.handle);
 		}
 	}
 
 	pub fn bind_shader_storage_buffer(&self, binding: u32, buffer: impl Into<UntypedBuffer>) {
 		let buffer = buffer.into();
 		unsafe {
-			raw::BindBufferBase(raw::SHADER_STORAGE_BUFFER, binding, buffer.0);
+			raw::BindBufferBase(raw::SHADER_STORAGE_BUFFER, binding, buffer.handle);
 		}
 	}
 
@@ -191,18 +194,30 @@ impl Context {
 
 
 	pub fn draw_indexed(&self, draw_mode: DrawMode, num_elements: u32) {
+		if num_elements == 0 {
+			return
+		}
+
 		unsafe {
 			raw::DrawElements(draw_mode.into_gl(), num_elements as i32, raw::UNSIGNED_SHORT, std::ptr::null());
 		}
 	}
 
 	pub fn draw_instances_indexed(&self, draw_mode: DrawMode, num_elements: u32, num_instances: u32) {
+		if num_elements == 0 || num_instances == 0 {
+			return
+		}
+
 		unsafe {
 			raw::DrawElementsInstanced(draw_mode.into_gl(), num_elements as i32, raw::UNSIGNED_SHORT, std::ptr::null(), num_instances as i32);
 		}
 	}
 
 	pub fn draw_arrays(&self, draw_mode: DrawMode, num_vertices: u32) {
+		if num_vertices == 0 {
+			return
+		}
+
 		unsafe {
 			raw::DrawArrays(draw_mode.into_gl(), 0, num_vertices as i32);
 		}

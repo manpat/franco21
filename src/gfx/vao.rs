@@ -17,7 +17,7 @@ impl Vao {
 
 	pub fn bind_index_buffer(&self, index_buffer: impl Into<gfx::UntypedBuffer>) {
 		unsafe {
-			raw::VertexArrayElementBuffer(self.handle, index_buffer.into().0);
+			raw::VertexArrayElementBuffer(self.handle, index_buffer.into().handle);
 		}
 	}
 

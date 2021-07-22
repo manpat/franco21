@@ -9,24 +9,30 @@ pub enum BufferUsage {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct UntypedBuffer (pub(super) u32);
+pub struct UntypedBuffer {
+	pub(super) handle: u32,
+	pub(super) size_bytes: usize,
+}
 
 
 #[derive(Copy, Clone, Debug)]
 pub struct Buffer<T: Copy> {
 	pub(super) handle: u32,
+	length: u32,
 	_phantom: PhantomData<*const T>,
 }
 
 
 impl UntypedBuffer {
 	pub fn upload<T: Copy>(&mut self, data: &[T], usage: BufferUsage) {
-		upload_untyped(self.0, data, usage);
+		upload_untyped(self.handle, data, usage);
+		self.size_bytes = data.len() * std::mem::size_of::<T>();
 	}
 
 	pub fn into_typed<T: Copy>(self) -> Buffer<T> {
 		Buffer {
-			handle: self.0,
+			handle: self.handle,
+			length: (self.size_bytes / std::mem::size_of::<T>()) as u32,
 			_phantom: PhantomData,
 		}
 	}
@@ -36,14 +42,26 @@ impl UntypedBuffer {
 impl<T: Copy> Buffer<T> {
 	pub fn upload(&mut self, data: &[T], usage: BufferUsage) {
 		upload_untyped(self.handle, data, usage);
+		self.length = data.len() as u32;
+	}
+
+	pub fn len(&self) -> u32 {
+		self.length
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.length == 0
 	}
 }
 
 
 
 impl<T: Copy> From<Buffer<T>> for UntypedBuffer {
-	fn from(Buffer{handle, ..}: Buffer<T>) -> UntypedBuffer {
-		UntypedBuffer(handle)
+	fn from(Buffer{handle, length, ..}: Buffer<T>) -> UntypedBuffer {
+		UntypedBuffer {
+			handle,
+			size_bytes: length as usize * std::mem::size_of::<T>(),
+		}
 	}
 }
 
@@ -51,7 +69,10 @@ impl<T: Copy> From<Buffer<T>> for UntypedBuffer {
 
 
 fn upload_untyped<T: Copy>(handle: u32, data: &[T], usage: BufferUsage) {
-	assert!(!data.is_empty());
+	if data.is_empty() {
+		// TODO(pat.m): is this what I want? 
+		return
+	}
 
 	let usage = match usage {
 		BufferUsage::Static => gfx::raw::STATIC_DRAW,
