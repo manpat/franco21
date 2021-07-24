@@ -118,6 +118,10 @@ impl Mat3x4 {
 		Vec3::new(a.w, b.w, c.w)
 	}
 
+	pub fn columns(&self) -> [Vec3; 4] {
+		[self.column_x(), self.column_y(), self.column_z(), self.column_w()]
+	}
+
 	pub fn determinant(&self) -> f32 {
 		let [a,b,c] = self.rows;
 

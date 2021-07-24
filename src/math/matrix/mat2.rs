@@ -48,9 +48,23 @@ impl Mat2 {
 		Mat2::new([ d, -b, -c,  a ])
 	}
 
-	pub fn determinant(&self) -> f32 {
+	pub fn column_x(&self) -> Vec2 {
 		let [a, b] = self.rows;
-		a.x*b.y - a.y*b.x
+		Vec2::new(a.x, b.x)
+	}
+
+	pub fn column_y(&self) -> Vec2 {
+		let [a, b] = self.rows;
+		Vec2::new(a.y, b.y)
+	}
+
+	pub fn columns(&self) -> [Vec2; 2] {
+		self.transpose().rows
+	}
+
+	pub fn determinant(&self) -> f32 {
+		let [a, b] = self.columns();
+		a.wedge(b)
 	}
 
 	pub fn inverse(&self) -> Mat2 {

@@ -5,7 +5,12 @@ use crate::easing::*;
 use std::f32::consts::PI;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Quat{pub x: f32, pub y: f32, pub z: f32, pub w: f32}
+pub struct Quat {
+	pub x: f32,
+	pub y: f32,
+	pub z: f32,
+	pub w: f32,
+}
 
 impl Quat {
 	pub const fn from_raw(x: f32, y: f32, z: f32, w: f32) -> Quat {

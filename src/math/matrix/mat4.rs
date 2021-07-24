@@ -87,6 +87,10 @@ impl Mat4 {
 		Vec4::new(a.w, b.w, c.w, d.w)
 	}
 
+	pub fn columns(&self) -> [Vec4; 4] {
+		self.transpose().rows
+	}
+
 	pub fn frustum(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Mat4 {
 		let xco = 2.0 * n / (r - l);
 		let yco = 2.0 * n / (t - b);

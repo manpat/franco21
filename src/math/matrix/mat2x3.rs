@@ -67,6 +67,10 @@ impl Mat2x3 {
 		Vec2::new(a.z, b.z)
 	}
 
+	pub fn columns(&self) -> [Vec2; 3] {
+		[self.column_x(), self.column_y(), self.column_z()]
+	}
+
 	pub fn inverse(&self) -> Mat2x3 {
 		// [a  b  c]
 		// [d  e  f]
