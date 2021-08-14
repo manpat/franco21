@@ -1,4 +1,4 @@
-use std::ops::{Mul, Div};
+use std::ops::Mul;
 use crate::vector::*;
 
 #[repr(C)]
@@ -17,7 +17,7 @@ impl Mat2 {
 
 	pub fn from_rows(rows: [Vec2; 2]) -> Mat2 { Mat2 { rows } }
 
-	pub fn ident() -> Mat2 { Mat2::uniform_scale(1.0) }
+	pub fn identity() -> Mat2 { Mat2::uniform_scale(1.0) }
 	pub fn uniform_scale(s: f32) -> Mat2 { Mat2::scale(Vec2::splat(s)) }
 
 	pub fn scale(s: Vec2) -> Mat2 {
@@ -103,15 +103,6 @@ impl Mul<f32> for Mat2 {
 		Mat2::from_rows([
 			self.rows[0] * o,
 			self.rows[1] * o
-		])
-	}
-}
-impl Div<f32> for Mat2 {
-	type Output = Mat2;
-	fn div(self, o: f32) -> Mat2 {
-		Mat2::from_rows([
-			self.rows[0] / o,
-			self.rows[1] / o
 		])
 	}
 }
