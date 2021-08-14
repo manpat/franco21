@@ -16,6 +16,9 @@ impl Mat2 {
 	}
 
 	pub fn from_rows(rows: [Vec2; 2]) -> Mat2 { Mat2 { rows } }
+	pub fn from_columns(columns: [Vec2; 2]) -> Mat2 {
+		Mat2::from_rows(columns).transpose()
+	}
 
 	pub fn identity() -> Mat2 { Mat2::uniform_scale(1.0) }
 	pub fn uniform_scale(s: f32) -> Mat2 { Mat2::scale(Vec2::splat(s)) }
