@@ -12,6 +12,7 @@ pub mod vertex;
 pub mod shader;
 pub mod query;
 pub mod capabilities;
+pub mod mesh;
 
 pub use self::context::Context;
 pub use self::vao::*;
@@ -21,6 +22,7 @@ pub use self::vertex::*;
 pub use self::shader::*;
 pub use self::query::*;
 pub use self::capabilities::*;
+pub use self::mesh::*;
 
 pub enum DrawMode {
 	Points,
