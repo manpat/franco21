@@ -29,8 +29,8 @@ impl<V: gfx::Vertex> Mesh<V> {
 	pub fn new(gfx: &gfx::Context) -> Self {
 		let vao = gfx.new_vao();
 
-		let vertex_buffer = gfx.new_buffer();
-		let index_buffer = gfx.new_buffer();
+		let vertex_buffer = gfx.new_buffer(gfx::BufferUsage::Dynamic);
+		let index_buffer = gfx.new_buffer(gfx::BufferUsage::Dynamic);
 
 		vao.bind_vertex_buffer(0, vertex_buffer);
 		vao.bind_index_buffer(index_buffer);
@@ -53,13 +53,13 @@ impl<V: gfx::Vertex> Mesh<V> {
 	}
 
 	pub fn upload(&mut self, mesh_data: &MeshData<V>) {
-		self.vertex_buffer.upload(&mesh_data.vertices, gfx::BufferUsage::Dynamic);
-		self.index_buffer.upload(&mesh_data.indices, gfx::BufferUsage::Dynamic);
+		self.vertex_buffer.upload(&mesh_data.vertices);
+		self.index_buffer.upload(&mesh_data.indices);
 	}
 
 	pub fn upload_separate(&mut self, vertices: &[V], indices: &[u16]) {
-		self.vertex_buffer.upload(vertices, gfx::BufferUsage::Dynamic);
-		self.index_buffer.upload(indices, gfx::BufferUsage::Dynamic);
+		self.vertex_buffer.upload(vertices);
+		self.index_buffer.upload(indices);
 	}
 }
 

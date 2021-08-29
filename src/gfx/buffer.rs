@@ -12,6 +12,7 @@ pub enum BufferUsage {
 pub struct UntypedBuffer {
 	pub(super) handle: u32,
 	pub(super) size_bytes: usize,
+	pub(super) usage: BufferUsage,
 }
 
 
@@ -19,13 +20,14 @@ pub struct UntypedBuffer {
 pub struct Buffer<T: Copy> {
 	pub(super) handle: u32,
 	length: u32,
+	usage: BufferUsage,
 	_phantom: PhantomData<*const T>,
 }
 
 
 impl UntypedBuffer {
-	pub fn upload<T: Copy>(&mut self, data: &[T], usage: BufferUsage) {
-		upload_untyped(self.handle, data, usage);
+	pub fn upload<T: Copy>(&mut self, data: &[T]) {
+		upload_untyped(self.handle, data, self.usage);
 		self.size_bytes = data.len() * std::mem::size_of::<T>();
 	}
 
@@ -33,6 +35,7 @@ impl UntypedBuffer {
 		Buffer {
 			handle: self.handle,
 			length: (self.size_bytes / std::mem::size_of::<T>()) as u32,
+			usage: self.usage,
 			_phantom: PhantomData,
 		}
 	}
@@ -40,8 +43,8 @@ impl UntypedBuffer {
 
 
 impl<T: Copy> Buffer<T> {
-	pub fn upload(&mut self, data: &[T], usage: BufferUsage) {
-		upload_untyped(self.handle, data, usage);
+	pub fn upload(&mut self, data: &[T]) {
+		upload_untyped(self.handle, data, self.usage);
 		self.length = data.len() as u32;
 	}
 
@@ -57,10 +60,11 @@ impl<T: Copy> Buffer<T> {
 
 
 impl<T: Copy> From<Buffer<T>> for UntypedBuffer {
-	fn from(Buffer{handle, length, ..}: Buffer<T>) -> UntypedBuffer {
+	fn from(Buffer{handle, length, usage, ..}: Buffer<T>) -> UntypedBuffer {
 		UntypedBuffer {
 			handle,
 			size_bytes: length as usize * std::mem::size_of::<T>(),
+			usage,
 		}
 	}
 }

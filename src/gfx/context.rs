@@ -76,19 +76,20 @@ impl Context {
 		}
 	}
 
-	pub fn new_untyped_buffer(&self) -> UntypedBuffer {
+	pub fn new_untyped_buffer(&self, usage: BufferUsage) -> UntypedBuffer {
 		unsafe {
 			let mut handle = 0;
 			raw::CreateBuffers(1, &mut handle);
 			UntypedBuffer {
 				handle,
 				size_bytes: 0,
+				usage,
 			}
 		}
 	}
 
-	pub fn new_buffer<T: Copy>(&self) -> Buffer<T> {
-		self.new_untyped_buffer().into_typed()
+	pub fn new_buffer<T: Copy>(&self, usage: BufferUsage) -> Buffer<T> {
+		self.new_untyped_buffer(usage).into_typed()
 	}
 
 	pub fn new_texture(&self, width: u32, height: u32, format: u32) -> Texture {
