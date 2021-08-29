@@ -29,8 +29,8 @@ impl<V: gfx::Vertex> Mesh<V> {
 	pub fn new(gfx: &gfx::Context) -> Self {
 		let vao = gfx.new_vao();
 
-		let vertex_buffer = gfx.new_buffer(gfx::BufferUsage::Dynamic);
-		let index_buffer = gfx.new_buffer(gfx::BufferUsage::Dynamic);
+		let vertex_buffer = gfx.new_buffer(gfx::BufferUsage::Stream);
+		let index_buffer = gfx.new_buffer(gfx::BufferUsage::Stream);
 
 		vao.bind_vertex_buffer(0, vertex_buffer);
 		vao.bind_index_buffer(index_buffer);
