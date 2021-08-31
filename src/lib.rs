@@ -1,4 +1,4 @@
-#![feature(backtrace, array_chunks)]
+#![feature(backtrace, array_chunks, type_ascription)]
 
 pub mod prelude;
 pub mod gfx;

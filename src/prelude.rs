@@ -1,4 +1,4 @@
-pub use common::{self, math::*, easing::Ease};
+pub use common::{self, rand, math::*, easing::Ease};
 pub use toy;
 pub use sdl2;
 pub use thiserror;

@@ -1,9 +1,10 @@
 
 use crate::audio::buffer::Buffer;
+use crate::audio::bus::Bus;
 
 pub const NUM_CHANNELS: usize = 2;
 
-pub struct Mixer {
+pub(super) struct Mixer {
 	mix_buffer: Vec<f32>,
 	gain: f32,
 }
@@ -12,17 +13,24 @@ impl Mixer {
 	pub fn new(buffer_samples: usize) -> Mixer {
 		Mixer {
 			mix_buffer: vec![0.0; buffer_samples * NUM_CHANNELS],
-			gain: 0.2,
+			gain: 1.0,
 		}
 	}
 
 	pub fn buffer_samples(&self) -> usize { self.mix_buffer.len() / NUM_CHANNELS }
+	pub fn buffer(&self) -> &[f32] { &self.mix_buffer }
 
 	pub fn clear(&mut self) {
 		for sample in self.mix_buffer.iter_mut() {
 			*sample = 0.0;
 		}
 	}
+
+	pub fn set_gain(&mut self, gain: f32) {
+		self.gain = gain;
+	}
+
+	pub fn gain(&self) -> f32 { self.gain }
 
 	pub fn mix_buffer(&mut self, buffer: &Buffer, position: usize) -> usize {
 		let buffer_samples = buffer.data.len() / buffer.channels;
@@ -55,7 +63,13 @@ impl Mixer {
 		buffer_consumption
 	}
 
-	pub fn buffer(&self) -> &[f32] { &self.mix_buffer }
+	pub fn mix_bus(&mut self, bus: &Bus) {
+		assert!(self.mix_buffer.len() == bus.buffer().len(), "Bus buffer size mismatch");
+
+		for (out_sample, in_sample) in self.mix_buffer.iter_mut().zip(bus.buffer()) {
+			*out_sample += *in_sample * self.gain;
+		}
+	}
 }
 
 
