@@ -1,5 +1,5 @@
 use common::*;
-
+use crate::gfx::mesh::PlaneMeshBuilderAdaptor;
 
 pub trait PolyBuilder2D {
 	fn extend_2d(&mut self, vs: impl IntoIterator<Item=Vec2>, is: impl IntoIterator<Item=u16>);
@@ -38,7 +38,18 @@ impl<PB: PolyBuilder2D> PolyBuilder2D for &mut PB {
 
 pub trait PolyBuilder3D {
 	fn extend_3d(&mut self, vs: impl IntoIterator<Item=Vec3>, is: impl IntoIterator<Item=u16>);
-	fn build(&mut self, geom: impl BuildableGeometry3D) where Self: Sized { geom.build(self) }
+
+	fn build(&mut self, geom: impl BuildableGeometry3D) where Self: Sized {
+		geom.build(self)
+	}
+
+	fn on_plane(self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<Self> where Self: Sized {
+		PlaneMeshBuilderAdaptor::new(self, uvw)
+	}
+	
+	fn on_plane_ref(&mut self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<&'_ mut Self> where Self: Sized {
+		PlaneMeshBuilderAdaptor::new(self, uvw)
+	}
 
 	fn extend_3d_fan(&mut self, num_vertices: u32, vs: impl IntoIterator<Item=Vec3>) {
 		if num_vertices < 3 {

@@ -24,19 +24,6 @@ impl<MD> ColorMeshBuilder<MD> {
 }
 
 
-impl<MD> ColorMeshBuilder<MD>
-	where MD: BorrowMut<MeshData<ColorVertex>>
-{
-	pub fn on_plane(self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<Self> {
-		PlaneMeshBuilderAdaptor::new(self, uvw)
-	}
-
-	pub fn on_plane_ref(&mut self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<&'_ mut Self> {
-		PlaneMeshBuilderAdaptor::new(self, uvw)
-	}
-}
-
-
 impl<MD> ColoredPolyBuilder for ColorMeshBuilder<MD> {
 	fn set_color(&mut self, color: impl Into<Color>) {
 		self.set_color(color);
