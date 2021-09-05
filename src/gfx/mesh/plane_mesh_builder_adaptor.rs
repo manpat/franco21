@@ -17,6 +17,7 @@ impl<MB: PolyBuilder3D> PlaneMeshBuilderAdaptor<MB> {
 	}
 }
 
+
 impl<MB> PlaneMeshBuilderAdaptor<MB>
 	where MB: PolyBuilder3D + ColoredPolyBuilder
 {
@@ -24,6 +25,7 @@ impl<MB> PlaneMeshBuilderAdaptor<MB>
 		self.builder_3d.set_color(color);
 	}
 }
+
 
 impl<MB: PolyBuilder3D> PolyBuilder2D for PlaneMeshBuilderAdaptor<MB> {
 	fn extend_2d(&mut self, vs: impl IntoIterator<Item=Vec2>, is: impl IntoIterator<Item=u16>) {
@@ -36,6 +38,7 @@ impl<MB: PolyBuilder3D> PolyBuilder2D for PlaneMeshBuilderAdaptor<MB> {
 		self.builder_3d.extend_3d(vertices_3d, is);
 	}
 }
+
 
 impl<MB> ColoredPolyBuilder for PlaneMeshBuilderAdaptor<MB>
 	where MB: PolyBuilder3D + ColoredPolyBuilder

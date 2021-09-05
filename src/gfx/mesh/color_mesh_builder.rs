@@ -1,16 +1,17 @@
 use common::*;
-use crate::gfx::vertex::ColorVertex;
-use crate::gfx::mesh::{MeshData, PolyBuilder3D, ColoredPolyBuilder, PlaneMeshBuilderAdaptor};
+use crate::gfx::vertex::{ColorVertex, ColorVertex2D};
+use crate::gfx::mesh::{MeshData, PolyBuilder2D, PolyBuilder3D, ColoredPolyBuilder, PlaneMeshBuilderAdaptor};
+use std::borrow::BorrowMut;
 
 
-pub struct ColorMeshBuilder<'md> {
-	data: &'md mut MeshData<ColorVertex>,
+pub struct ColorMeshBuilder<MD> {
+	pub data: MD,
 	color: Color,
 }
 
 
-impl<'md> ColorMeshBuilder<'md> {
-	pub fn new(data: &'md mut MeshData<ColorVertex>) -> Self {
+impl<MD> ColorMeshBuilder<MD> {
+	pub fn new(data: MD) -> Self {
 		ColorMeshBuilder {
 			data,
 			color: Color::white(),
@@ -20,7 +21,12 @@ impl<'md> ColorMeshBuilder<'md> {
 	pub fn set_color(&mut self, color: impl Into<Color>) {
 		self.color = color.into();
 	}
+}
 
+
+impl<MD> ColorMeshBuilder<MD>
+	where MD: BorrowMut<MeshData<ColorVertex>>
+{
 	pub fn on_plane(self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<Self> {
 		PlaneMeshBuilderAdaptor::new(self, uvw)
 	}
@@ -31,16 +37,29 @@ impl<'md> ColorMeshBuilder<'md> {
 }
 
 
-impl PolyBuilder3D for ColorMeshBuilder<'_> {
-	fn extend_3d(&mut self, vs: impl IntoIterator<Item=Vec3>, is: impl IntoIterator<Item=u16>) {
-		let color = self.color.into();
-		self.data.extend(vs.into_iter().map(|v| ColorVertex::new(v, color)), is);
+impl<MD> ColoredPolyBuilder for ColorMeshBuilder<MD> {
+	fn set_color(&mut self, color: impl Into<Color>) {
+		self.set_color(color);
 	}
 }
 
 
-impl ColoredPolyBuilder for ColorMeshBuilder<'_> {
-	fn set_color(&mut self, color: impl Into<Color>) {
-		self.set_color(color);
+
+impl<MD> PolyBuilder2D for ColorMeshBuilder<MD>
+	where MD: BorrowMut<MeshData<ColorVertex2D>>
+{
+	fn extend_2d(&mut self, vs: impl IntoIterator<Item=Vec2>, is: impl IntoIterator<Item=u16>) {
+		let color = self.color.into();
+		self.data.borrow_mut().extend(vs.into_iter().map(|v| ColorVertex2D::new(v, color)), is);
+	}
+}
+
+
+impl<MD> PolyBuilder3D for ColorMeshBuilder<MD>
+	where MD: BorrowMut<MeshData<ColorVertex>>
+{
+	fn extend_3d(&mut self, vs: impl IntoIterator<Item=Vec3>, is: impl IntoIterator<Item=u16>) {
+		let color = self.color.into();
+		self.data.borrow_mut().extend(vs.into_iter().map(|v| ColorVertex::new(v, color)), is);
 	}
 }
