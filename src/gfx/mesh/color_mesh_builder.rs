@@ -21,7 +21,11 @@ impl<'md> ColorMeshBuilder<'md> {
 		self.color = color.into();
 	}
 
-	pub fn on_plane(&mut self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<'_, Self> {
+	pub fn on_plane(self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<Self> {
+		PlaneMeshBuilderAdaptor::new(self, uvw)
+	}
+
+	pub fn on_plane_ref(&mut self, uvw: Mat3) -> PlaneMeshBuilderAdaptor<&'_ mut Self> {
 		PlaneMeshBuilderAdaptor::new(self, uvw)
 	}
 }

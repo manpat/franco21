@@ -23,9 +23,9 @@ impl BuildableGeometry2D for Quad {
 
 		mb.extend_2d_fan(4, [
 			translation - hx - hy,
-			translation - hx + hy,
-			translation + hx + hy,
 			translation + hx - hy,
+			translation + hx + hy,
+			translation - hx + hy,
 		]);
 	}
 }

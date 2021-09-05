@@ -20,6 +20,10 @@ impl Context {
 			// raw::BlendFunc(raw::DST_COLOR, raw::ZERO);
 			// raw::BlendEquation(raw::FUNC_ADD);
 
+			raw::Enable(raw::CULL_FACE);
+			raw::FrontFace(raw::CCW);
+			raw::CullFace(raw::BACK);
+
 			// Disable performance messages
 			raw::DebugMessageControl(
 				raw::DONT_CARE,
