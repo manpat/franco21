@@ -1,6 +1,6 @@
 use common::*;
 use crate::gfx::vertex::{ColorVertex, ColorVertex2D};
-use crate::gfx::mesh::{MeshData, PolyBuilder2D, PolyBuilder3D, ColoredPolyBuilder, PlaneMeshBuilderAdaptor};
+use crate::gfx::mesh::{MeshData, PolyBuilder2D, PolyBuilder3D, ColoredPolyBuilder};
 use std::borrow::BorrowMut;
 
 

@@ -44,6 +44,10 @@ impl Polygon {
 	pub fn unit(num_faces: u32) -> Polygon {
 		Polygon::from_matrix(num_faces, Mat2x3::identity())
 	}
+
+	pub fn from_pos_scale(num_faces: u32, pos: Vec2, scale: Vec2) -> Polygon {
+		Polygon::from_matrix(num_faces, Mat2x3::scale_translate(scale, pos))
+	}
 }
 
 impl BuildableGeometry2D for Polygon {
