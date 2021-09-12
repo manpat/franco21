@@ -5,8 +5,6 @@ pub struct Context {
 	shader_manager: ShaderManager,
 	capabilities: Capabilities,
 
-	canvas_size: Vec2i,
-
 	render_state: RenderState,
 }
 
@@ -50,23 +48,24 @@ impl Context {
 			shader_manager: ShaderManager::new(),
 			capabilities: Capabilities::new(),
 
-			canvas_size: Vec2i::splat(1),
-			render_state: RenderState {},
+			render_state: RenderState {
+				canvas_size: Vec2i::splat(1),
+			},
 		}
 	}
 
 	pub(crate) fn on_resize(&mut self, w: u32, h: u32) {
 		unsafe {
 			raw::Viewport(0, 0, w as _, h as _);
-			self.canvas_size = Vec2i::new(w as _, h as _);
+			self.render_state.canvas_size = Vec2i::new(w as _, h as _);
 		}
 
 		// TODO(pat.m): resize framebuffers
 	}
 
-	pub fn canvas_size(&self) -> Vec2i { self.canvas_size }
+	pub fn canvas_size(&self) -> Vec2i { self.render_state.canvas_size }
 	pub fn aspect(&self) -> f32 {
-		let Vec2{x, y} = self.canvas_size.to_vec2();
+		let Vec2{x, y} = self.render_state.canvas_size.to_vec2();
 		x / y
 	}
 
@@ -101,8 +100,8 @@ impl Context {
 		}
 	}
 
-	pub fn new_framebuffer(&mut self, size_mode: FramebufferSize) -> Framebuffer {
-		Framebuffer::new(size_mode)
+	pub fn new_framebuffer(&mut self, settings: FramebufferSettings) -> Framebuffer {
+		Framebuffer::new(settings, self.render_state.canvas_size)
 		// TODO(pat.m): store framebuffers so they can be resized
 	}
 
@@ -148,7 +147,7 @@ impl Context {
 
 
 pub struct RenderState {
-
+	canvas_size: Vec2i,
 }
 
 impl RenderState {
@@ -192,6 +191,7 @@ impl RenderState {
 	}
 
 	pub fn bind_image_rw(&mut self, binding: u32, texture: Texture, format: u32) {
+		// https://www.khronos.org/opengl/wiki/Image_Load_Store#Images_in_the_context
 		unsafe {
 			let (level, layered, layer) = (0, 0, 0);
 			raw::BindImageTexture(binding, texture.0, level, layered, layer, raw::READ_WRITE, format);
@@ -213,6 +213,24 @@ impl RenderState {
 	pub fn bind_shader(&mut self, shader: Shader) {
 		unsafe {
 			raw::UseProgram(shader.0);
+		}
+	}
+
+	pub fn bind_framebuffer<'fbo>(&mut self, framebuffer: impl Into<Option<&'fbo Framebuffer>>) {
+		if let Some(framebuffer) = framebuffer.into() {
+			let Vec2i{x,y} = framebuffer.size_mode.resolve(self.canvas_size);
+
+			unsafe {
+				raw::Viewport(0, 0, x, y);
+				raw::BindFramebuffer(raw::DRAW_FRAMEBUFFER, framebuffer.handle);
+			}
+		} else {
+			let Vec2i{x,y} = self.canvas_size;
+
+			unsafe {
+				raw::Viewport(0, 0, x, y);
+				raw::BindFramebuffer(raw::DRAW_FRAMEBUFFER, 0);
+			}
 		}
 	}
 
