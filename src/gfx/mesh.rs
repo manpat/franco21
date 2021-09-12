@@ -24,8 +24,8 @@ pub struct Mesh<V: gfx::Vertex> {
 
 
 impl<V: gfx::Vertex> Mesh<V> {
-	pub fn with_buffer_usage(gfx: &gfx::Context, buffer_usage: gfx::BufferUsage) -> Self {
-		let vao = gfx.new_vao();
+	pub fn with_buffer_usage(gfx: &mut gfx::Context, buffer_usage: gfx::BufferUsage) -> Self {
+		let mut vao = gfx.new_vao();
 
 		let vertex_buffer = gfx.new_buffer(buffer_usage);
 		let index_buffer = gfx.new_buffer(buffer_usage);
@@ -40,22 +40,22 @@ impl<V: gfx::Vertex> Mesh<V> {
 		}
 	}
 
-	pub fn new(gfx: &gfx::Context) -> Self {
+	pub fn new(gfx: &mut gfx::Context) -> Self {
 		Mesh::with_buffer_usage(gfx, gfx::BufferUsage::Stream)
 	}
 
-	pub fn from_mesh_data(gfx: &gfx::Context, mesh_data: &MeshData<V>) -> Self {
+	pub fn from_mesh_data(gfx: &mut gfx::Context, mesh_data: &MeshData<V>) -> Self {
 		let mut mesh = Mesh::with_buffer_usage(gfx, gfx::BufferUsage::Static);
 		mesh.upload(mesh_data);
 		mesh
 	}
 
-	pub fn draw(&self, gfx: &gfx::Context, draw_mode: gfx::DrawMode) {
+	pub fn draw(&self, gfx: &mut gfx::RenderState, draw_mode: gfx::DrawMode) {
 		gfx.bind_vao(self.vao);
 		gfx.draw_indexed(draw_mode, self.index_buffer.len());
 	}
 
-	pub fn draw_instanced(&self, gfx: &gfx::Context, draw_mode: gfx::DrawMode, num_instances: u32) {
+	pub fn draw_instanced(&self, gfx: &mut gfx::RenderState, draw_mode: gfx::DrawMode, num_instances: u32) {
 		gfx.bind_vao(self.vao);
 		gfx.draw_instances_indexed(draw_mode, self.index_buffer.len(), num_instances);
 	}

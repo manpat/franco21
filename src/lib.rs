@@ -35,7 +35,7 @@ impl Engine {
 		let input = input::InputSystem::new(sdl_ctx.mouse(), &window);
 		let audio = audio::AudioSystem::new(sdl_audio)?;
 
-		let instrumenter = perf::Instrumenter::new(&gfx);
+		let instrumenter = perf::Instrumenter::new(&mut gfx);
 
 		// Make sure aspect is set up correctly
 		let (w, h) = window.drawable_size();

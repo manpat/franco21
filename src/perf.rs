@@ -37,7 +37,7 @@ pub struct SectionSummary {
 
 // TODO(pat.m): queries for total frame time/geometry - use indexed queries
 impl Instrumenter {
-	pub fn new(gl_ctx: &gfx::Context) -> Instrumenter {
+	pub fn new(gl_ctx: &mut gfx::Context) -> Instrumenter {
 		assert!(gl_ctx.capabilities().max_simultaneous_primitive_queries > 0);
 		assert!(gl_ctx.capabilities().max_simultaneous_time_elapsed_queries > 0);
 
@@ -165,7 +165,7 @@ struct Section {
 }
 
 impl Section {
-	fn new(gl_ctx: &gfx::Context) -> Section {
+	fn new(gl_ctx: &mut gfx::Context) -> Section {
 		Section {
 			name: String::new(),
 			timer_query_object: gl_ctx.new_query(),

@@ -6,13 +6,15 @@ pub struct Texture (pub(super) u32);
 
 
 impl Texture {
-	pub fn clear(&self) {
+	pub fn clear(&mut self) {
 		unsafe {
+			// TODO(pat.m): needs information about the actual format of the texture
+			// this is incorrect for multichannel, non-float textures
 			raw::ClearTexImage(self.0, 0, raw::RED, raw::FLOAT, &0.0f32 as *const f32 as _);
 		}
 	}
 
-	pub fn set_filter(&self, min_linear: bool, mag_linear: bool) {
+	pub fn set_filter(&mut self, min_linear: bool, mag_linear: bool) {
 		let min = match min_linear {
 			true => raw::LINEAR,
 			false => raw::NEAREST,
@@ -29,7 +31,7 @@ impl Texture {
 		}
 	}
 
-	pub fn set_wrap(&self, wrap: bool) {
+	pub fn set_wrap(&mut self, wrap: bool) {
 		let mode = match wrap {
 			true => raw::REPEAT,
 			false => raw::CLAMP_TO_EDGE,

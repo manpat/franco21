@@ -6,6 +6,8 @@ pub struct Context {
 	capabilities: Capabilities,
 
 	canvas_size: Vec2i,
+
+	render_state: RenderState,
 }
 
 impl Context {
@@ -49,6 +51,7 @@ impl Context {
 			capabilities: Capabilities::new(),
 
 			canvas_size: Vec2i::splat(1),
+			render_state: RenderState {},
 		}
 	}
 
@@ -57,8 +60,9 @@ impl Context {
 			raw::Viewport(0, 0, w as _, h as _);
 			self.canvas_size = Vec2i::new(w as _, h as _);
 		}
-	}
 
+		// TODO(pat.m): resize framebuffers
+	}
 
 	pub fn canvas_size(&self) -> Vec2i { self.canvas_size }
 	pub fn aspect(&self) -> f32 {
@@ -68,19 +72,10 @@ impl Context {
 
 	pub fn capabilities(&self) -> &Capabilities { &self.capabilities }
 
+	pub fn render_state(&mut self) -> &mut RenderState { &mut self.render_state }
 
-	pub fn set_wireframe(&self, wireframe_enabled: bool) {
-		let mode = match wireframe_enabled {
-			false => raw::FILL,
-			true => raw::LINE,
-		};
 
-		unsafe {
-			raw::PolygonMode(raw::FRONT_AND_BACK, mode);
-		}
-	}
-
-	pub fn new_untyped_buffer(&self, usage: BufferUsage) -> UntypedBuffer {
+	pub fn new_untyped_buffer(&mut self, usage: BufferUsage) -> UntypedBuffer {
 		unsafe {
 			let mut handle = 0;
 			raw::CreateBuffers(1, &mut handle);
@@ -92,11 +87,11 @@ impl Context {
 		}
 	}
 
-	pub fn new_buffer<T: Copy>(&self, usage: BufferUsage) -> Buffer<T> {
+	pub fn new_buffer<T: Copy>(&mut self, usage: BufferUsage) -> Buffer<T> {
 		self.new_untyped_buffer(usage).into_typed()
 	}
 
-	pub fn new_texture(&self, width: u32, height: u32, format: u32) -> Texture {
+	pub fn new_texture(&mut self, width: u32, height: u32, format: u32) -> Texture {
 		unsafe {
 			let mut tex = 0;
 			raw::CreateTextures(raw::TEXTURE_2D, 1, &mut tex);
@@ -106,7 +101,12 @@ impl Context {
 		}
 	}
 
-	pub fn new_vao(&self) -> Vao {
+	pub fn new_framebuffer(&mut self, size_mode: FramebufferSize) -> Framebuffer {
+		Framebuffer::new(size_mode)
+		// TODO(pat.m): store framebuffers so they can be resized
+	}
+
+	pub fn new_vao(&mut self) -> Vao {
 		unsafe {
 			let mut vao = 0;
 			raw::CreateVertexArrays(1, &mut vao);
@@ -114,44 +114,11 @@ impl Context {
 		}
 	}
 
-	pub fn new_query(&self) -> QueryObject {
+	pub fn new_query(&mut self) -> QueryObject {
 		unsafe {
 			let mut handle = 0;
 			raw::GenQueries(1, &mut handle);
 			QueryObject(handle)
-		}
-	}
-
-	pub fn bind_uniform_buffer(&self, binding: u32, buffer: impl Into<UntypedBuffer>) {
-		let buffer = buffer.into();
-		unsafe {
-			raw::BindBufferBase(raw::UNIFORM_BUFFER, binding, buffer.handle);
-		}
-	}
-
-	pub fn bind_shader_storage_buffer(&self, binding: u32, buffer: impl Into<UntypedBuffer>) {
-		let buffer = buffer.into();
-		unsafe {
-			raw::BindBufferBase(raw::SHADER_STORAGE_BUFFER, binding, buffer.handle);
-		}
-	}
-
-	pub fn bind_image_rw(&self, binding: u32, texture: Texture, format: u32) {
-		unsafe {
-			let (level, layered, layer) = (0, 0, 0);
-			raw::BindImageTexture(binding, texture.0, level, layered, layer, raw::READ_WRITE, format);
-		}
-	}
-
-	pub fn bind_texture(&self, binding: u32, texture: Texture) {
-		unsafe {
-			raw::BindTextureUnit(binding, texture.0);
-		}
-	}
-
-	pub fn bind_vao(&self, vao: Vao) {
-		unsafe {
-			raw::BindVertexArray(vao.handle);
 		}
 	}
 
@@ -160,40 +127,92 @@ impl Context {
 		self.shader_manager.add_import(name, src)
 	}
 
-	pub fn new_shader(&self, shaders: &[(u32, &str)]) -> Result<Shader, shader::CompilationError> {
+	pub fn new_shader(&mut self, shaders: &[(u32, &str)]) -> Result<Shader, shader::CompilationError> {
 		self.shader_manager.get_shader(shaders)
 	}
 
-	pub fn new_simple_shader(&self, vsrc: &str, fsrc: &str) -> Result<Shader, shader::CompilationError> {
+	pub fn new_simple_shader(&mut self, vsrc: &str, fsrc: &str) -> Result<Shader, shader::CompilationError> {
 		self.shader_manager.get_shader(&[
 			(raw::VERTEX_SHADER, vsrc),
 			(raw::FRAGMENT_SHADER, fsrc),
 		])
 	}
 
-	pub fn new_compute_shader(&self, csrc: &str) -> Result<Shader, shader::CompilationError> {
+	pub fn new_compute_shader(&mut self, csrc: &str) -> Result<Shader, shader::CompilationError> {
 		self.shader_manager.get_shader(&[
 			(raw::COMPUTE_SHADER, csrc)
 		])
 	}
+}
 
-	pub fn bind_shader(&self, shader: Shader) {
+
+
+pub struct RenderState {
+
+}
+
+impl RenderState {
+	pub fn set_wireframe(&mut self, wireframe_enabled: bool) {
+		let mode = match wireframe_enabled {
+			false => raw::FILL,
+			true => raw::LINE,
+		};
+
 		unsafe {
-			raw::UseProgram(shader.0);
+			raw::PolygonMode(raw::FRONT_AND_BACK, mode);
 		}
 	}
 
-
-	pub fn set_clear_color(&self, color: impl Into<Color>) {
+	pub fn set_clear_color(&mut self, color: impl Into<Color>) {
 		let (r,g,b,a) = color.into().to_tuple();
 		unsafe {
 			raw::ClearColor(r, g, b, a);
 		}
 	}
 
-	pub fn clear(&self, mode: ClearMode) {
+	pub fn clear(&mut self, mode: ClearMode) {
 		unsafe {
 			raw::Clear(mode.into_gl());
+		}
+	}
+
+
+	pub fn bind_uniform_buffer(&mut self, binding: u32, buffer: impl Into<UntypedBuffer>) {
+		let buffer = buffer.into();
+		unsafe {
+			raw::BindBufferBase(raw::UNIFORM_BUFFER, binding, buffer.handle);
+		}
+	}
+
+	pub fn bind_shader_storage_buffer(&mut self, binding: u32, buffer: impl Into<UntypedBuffer>) {
+		let buffer = buffer.into();
+		unsafe {
+			raw::BindBufferBase(raw::SHADER_STORAGE_BUFFER, binding, buffer.handle);
+		}
+	}
+
+	pub fn bind_image_rw(&mut self, binding: u32, texture: Texture, format: u32) {
+		unsafe {
+			let (level, layered, layer) = (0, 0, 0);
+			raw::BindImageTexture(binding, texture.0, level, layered, layer, raw::READ_WRITE, format);
+		}
+	}
+
+	pub fn bind_texture(&mut self, binding: u32, texture: Texture) {
+		unsafe {
+			raw::BindTextureUnit(binding, texture.0);
+		}
+	}
+
+	pub fn bind_vao(&mut self, vao: Vao) {
+		unsafe {
+			raw::BindVertexArray(vao.handle);
+		}
+	}
+
+	pub fn bind_shader(&mut self, shader: Shader) {
+		unsafe {
+			raw::UseProgram(shader.0);
 		}
 	}
 
@@ -234,6 +253,7 @@ impl Context {
 		}
 	}
 }
+
 
 
 
