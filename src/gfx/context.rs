@@ -4,8 +4,9 @@ pub struct Context {
 	_sdl_ctx: sdl2::video::GLContext,
 	shader_manager: ShaderManager,
 	capabilities: Capabilities,
+	backbuffer_size: Vec2i,
 
-	render_state: RenderState,
+	resources: Resources,
 }
 
 impl Context {
@@ -47,31 +48,35 @@ impl Context {
 			_sdl_ctx: sdl_ctx,
 			shader_manager: ShaderManager::new(),
 			capabilities: Capabilities::new(),
+			backbuffer_size: Vec2i::splat(1),
 
-			render_state: RenderState {
-				canvas_size: Vec2i::splat(1),
-			},
+			resources: Resources::new(),
 		}
 	}
 
 	pub(crate) fn on_resize(&mut self, w: u32, h: u32) {
 		unsafe {
 			raw::Viewport(0, 0, w as _, h as _);
-			self.render_state.canvas_size = Vec2i::new(w as _, h as _);
 		}
 
-		// TODO(pat.m): resize framebuffers
+		self.backbuffer_size = Vec2i::new(w as _, h as _);
+		self.resources.on_resize(self.backbuffer_size);
 	}
 
-	pub fn canvas_size(&self) -> Vec2i { self.render_state.canvas_size }
+	pub fn backbuffer_size(&self) -> Vec2i { self.backbuffer_size }
 	pub fn aspect(&self) -> f32 {
-		let Vec2{x, y} = self.render_state.canvas_size.to_vec2();
+		let Vec2{x, y} = self.backbuffer_size.to_vec2();
 		x / y
 	}
 
 	pub fn capabilities(&self) -> &Capabilities { &self.capabilities }
 
-	pub fn render_state(&mut self) -> &mut RenderState { &mut self.render_state }
+	pub fn render_state(&mut self) -> RenderState<'_> {
+		RenderState {
+			resources: &mut self.resources,
+			backbuffer_size: self.backbuffer_size,
+		}
+	}
 
 
 	pub fn new_untyped_buffer(&mut self, usage: BufferUsage) -> UntypedBuffer {
@@ -90,19 +95,19 @@ impl Context {
 		self.new_untyped_buffer(usage).into_typed()
 	}
 
-	pub fn new_texture(&mut self, width: u32, height: u32, format: u32) -> Texture {
-		unsafe {
-			let mut tex = 0;
-			raw::CreateTextures(raw::TEXTURE_2D, 1, &mut tex);
-			raw::TextureStorage2D(tex, 1, format, width as i32, height as i32);
-			raw::TextureParameteri(tex, raw::TEXTURE_MIN_FILTER, raw::LINEAR as _);
-			Texture(tex)
-		}
+	pub fn new_texture(&mut self, width: u32, height: u32, format: u32) -> TextureKey {
+		let texture = Texture::new(
+			Vec2i::new(width as i32, height as i32).into(),
+			self.backbuffer_size,
+			format
+		);
+
+		self.resources.insert_texture(texture)
 	}
 
-	pub fn new_framebuffer(&mut self, settings: FramebufferSettings) -> Framebuffer {
-		Framebuffer::new(settings, self.render_state.canvas_size)
-		// TODO(pat.m): store framebuffers so they can be resized
+	pub fn new_framebuffer(&mut self, settings: FramebufferSettings) -> FramebufferKey {
+		let framebuffer = Framebuffer::new(settings, &mut self.resources, self.backbuffer_size);
+		self.resources.insert_framebuffer(framebuffer)
 	}
 
 	pub fn new_vao(&mut self) -> Vao {
@@ -146,11 +151,12 @@ impl Context {
 
 
 
-pub struct RenderState {
-	canvas_size: Vec2i,
+pub struct RenderState<'ctx> {
+	resources: &'ctx mut Resources,
+	backbuffer_size: Vec2i,
 }
 
-impl RenderState {
+impl RenderState<'_> {
 	pub fn set_wireframe(&mut self, wireframe_enabled: bool) {
 		let mode = match wireframe_enabled {
 			false => raw::FILL,
@@ -190,17 +196,21 @@ impl RenderState {
 		}
 	}
 
-	pub fn bind_image_rw(&mut self, binding: u32, texture: Texture, format: u32) {
+	pub fn bind_image_rw(&mut self, binding: u32, texture: TextureKey, format: u32) {
 		// https://www.khronos.org/opengl/wiki/Image_Load_Store#Images_in_the_context
 		unsafe {
 			let (level, layered, layer) = (0, 0, 0);
-			raw::BindImageTexture(binding, texture.0, level, layered, layer, raw::READ_WRITE, format);
+			let mut texture = texture.get_mut(self.resources);
+			texture.apply_changes();
+			raw::BindImageTexture(binding, texture.handle, level, layered, layer, raw::READ_WRITE, format);
 		}
 	}
 
-	pub fn bind_texture(&mut self, binding: u32, texture: Texture) {
+	pub fn bind_texture(&mut self, binding: u32, texture: TextureKey) {
 		unsafe {
-			raw::BindTextureUnit(binding, texture.0);
+			let mut texture = texture.get_mut(self.resources);
+			texture.apply_changes();
+			raw::BindTextureUnit(binding, texture.handle);
 		}
 	}
 
@@ -216,16 +226,17 @@ impl RenderState {
 		}
 	}
 
-	pub fn bind_framebuffer<'fbo>(&mut self, framebuffer: impl Into<Option<&'fbo Framebuffer>>) {
+	pub fn bind_framebuffer<'fbo>(&mut self, framebuffer: impl Into<Option<FramebufferKey>>) {
 		if let Some(framebuffer) = framebuffer.into() {
-			let Vec2i{x,y} = framebuffer.size_mode.resolve(self.canvas_size);
+			let framebuffer = framebuffer.get(self.resources);
+			let Vec2i{x,y} = framebuffer.size_mode.resolve(self.backbuffer_size);
 
 			unsafe {
 				raw::Viewport(0, 0, x, y);
 				raw::BindFramebuffer(raw::DRAW_FRAMEBUFFER, framebuffer.handle);
 			}
 		} else {
-			let Vec2i{x,y} = self.canvas_size;
+			let Vec2i{x,y} = self.backbuffer_size;
 
 			unsafe {
 				raw::Viewport(0, 0, x, y);

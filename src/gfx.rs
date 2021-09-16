@@ -5,6 +5,7 @@ pub mod raw {
 }
 
 pub mod context;
+pub mod resources;
 pub mod vao;
 pub mod buffer;
 pub mod texture;
@@ -16,6 +17,7 @@ pub mod capabilities;
 pub mod mesh;
 
 pub use self::context::*;
+pub use self::resources::*;
 pub use self::vao::*;
 pub use self::buffer::*;
 pub use self::texture::*;

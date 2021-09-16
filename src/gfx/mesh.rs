@@ -50,12 +50,12 @@ impl<V: gfx::Vertex> Mesh<V> {
 		mesh
 	}
 
-	pub fn draw(&self, gfx: &mut gfx::RenderState, draw_mode: gfx::DrawMode) {
+	pub fn draw(&self, gfx: &mut gfx::RenderState<'_>, draw_mode: gfx::DrawMode) {
 		gfx.bind_vao(self.vao);
 		gfx.draw_indexed(draw_mode, self.index_buffer.len());
 	}
 
-	pub fn draw_instanced(&self, gfx: &mut gfx::RenderState, draw_mode: gfx::DrawMode, num_instances: u32) {
+	pub fn draw_instanced(&self, gfx: &mut gfx::RenderState<'_>, draw_mode: gfx::DrawMode, num_instances: u32) {
 		gfx.bind_vao(self.vao);
 		gfx.draw_instances_indexed(draw_mode, self.index_buffer.len(), num_instances);
 	}
