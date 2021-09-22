@@ -95,13 +95,8 @@ impl Context {
 		self.new_untyped_buffer(usage).into_typed()
 	}
 
-	pub fn new_texture(&mut self, width: u32, height: u32, format: u32) -> TextureKey {
-		let texture = Texture::new(
-			Vec2i::new(width as i32, height as i32).into(),
-			self.backbuffer_size,
-			format
-		);
-
+	pub fn new_texture(&mut self, size: impl Into<TextureSize>, format: TextureFormat) -> TextureKey {
+		let texture = Texture::new(size.into(), self.backbuffer_size, format);
 		self.resources.insert_texture(texture)
 	}
 
@@ -181,6 +176,17 @@ impl RenderState<'_> {
 		}
 	}
 
+	pub fn resources(&self) -> &'_ Resources {
+		self.resources
+	}
+
+	pub fn get_framebuffer(&self, framebuffer: FramebufferKey) -> ResourceLock<Framebuffer> {
+		self.resources.get(framebuffer)
+	}
+
+	pub fn get_texture(&self, texture: TextureKey) -> ResourceLock<Texture> {
+		self.resources.get(texture)
+	}
 
 	pub fn bind_uniform_buffer(&mut self, binding: u32, buffer: impl Into<UntypedBuffer>) {
 		let buffer = buffer.into();
@@ -196,20 +202,41 @@ impl RenderState<'_> {
 		}
 	}
 
-	pub fn bind_image_rw(&mut self, binding: u32, texture: TextureKey, format: u32) {
+	pub fn bind_image_for_rw(&mut self, binding: u32, texture: TextureKey) {
 		// https://www.khronos.org/opengl/wiki/Image_Load_Store#Images_in_the_context
+		let (level, layered, layer) = (0, 0, 0);
+		let texture = texture.get(self.resources);
+
 		unsafe {
-			let (level, layered, layer) = (0, 0, 0);
-			let mut texture = texture.get_mut(self.resources);
-			texture.apply_changes();
-			raw::BindImageTexture(binding, texture.handle, level, layered, layer, raw::READ_WRITE, format);
+			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+				raw::READ_WRITE, texture.format().to_gl());
+		}
+	}
+
+	pub fn bind_image_for_read(&mut self, binding: u32, texture: TextureKey) {
+		let (level, layered, layer) = (0, 0, 0);
+		let texture = texture.get(self.resources);
+
+		unsafe {
+			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+				raw::READ_ONLY, texture.format().to_gl());
+		}
+	}
+
+	pub fn bind_image_for_write(&mut self, binding: u32, texture: TextureKey) {
+		let (level, layered, layer) = (0, 0, 0);
+		let texture = texture.get(self.resources);
+
+		unsafe {
+			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+				raw::WRITE_ONLY, texture.format().to_gl());
 		}
 	}
 
 	pub fn bind_texture(&mut self, binding: u32, texture: TextureKey) {
+		let texture = texture.get(self.resources);
+
 		unsafe {
-			let mut texture = texture.get_mut(self.resources);
-			texture.apply_changes();
 			raw::BindTextureUnit(binding, texture.handle);
 		}
 	}
@@ -226,7 +253,7 @@ impl RenderState<'_> {
 		}
 	}
 
-	pub fn bind_framebuffer<'fbo>(&mut self, framebuffer: impl Into<Option<FramebufferKey>>) {
+	pub fn bind_framebuffer(&mut self, framebuffer: impl Into<Option<FramebufferKey>>) {
 		if let Some(framebuffer) = framebuffer.into() {
 			let framebuffer = framebuffer.get(self.resources);
 			let Vec2i{x,y} = framebuffer.size_mode.resolve(self.backbuffer_size);
@@ -244,7 +271,6 @@ impl RenderState<'_> {
 			}
 		}
 	}
-
 
 	pub fn draw_indexed(&self, draw_mode: DrawMode, num_elements: u32) {
 		if num_elements == 0 {

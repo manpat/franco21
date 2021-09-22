@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::gfx::{
 	self, raw,
-	Texture, TextureSize, TextureKey,
+	Texture, TextureSize, TextureFormat, TextureKey,
 };
 
 #[derive(Debug)]
@@ -28,21 +28,22 @@ impl Framebuffer {
 			color_attachments,
 		} = settings;
 
-		let (depth_stencil_format, depth_stencil_attachment_point) = match (depth_attachment, stencil_attachment) {
-			(false, false) => (0, 0),
-			(true, false) => (raw::DEPTH_COMPONENT24, raw::DEPTH_ATTACHMENT),
-			(false, true) => (raw::STENCIL_INDEX8, raw::STENCIL_ATTACHMENT),
-			(true, true) => (raw::DEPTH24_STENCIL8, raw::DEPTH_STENCIL_ATTACHMENT),
-		};
+		let mut generate_depth_stencil_attachment = || {
+			let (depth_stencil_format, depth_stencil_attachment_point) = match (depth_attachment, stencil_attachment) {
+				(false, false) => return None,
+				(true, false) => (TextureFormat::Depth, raw::DEPTH_ATTACHMENT),
+				(false, true) => (TextureFormat::Stencil, raw::STENCIL_ATTACHMENT),
+				(true, true) => (TextureFormat::DepthStencil, raw::DEPTH_STENCIL_ATTACHMENT),
+			};
 
-		let depth_stencil_attachment = (depth_stencil_format != 0).then(|| {
 			let depth_stencil_tex = Texture::new(size_mode, backbuffer_size, depth_stencil_format);
-			Attachment {
+			Some(Attachment {
 				attachment_point: depth_stencil_attachment_point,
 				texture_key: resources.insert_texture(depth_stencil_tex)
-			}
-		});
+			})
+		};
 
+		let depth_stencil_attachment = generate_depth_stencil_attachment();
 
 		let color_attachments = color_attachments.iter()
 			.enumerate()
@@ -56,6 +57,8 @@ impl Framebuffer {
 			.collect(): Vec<_>;
 
 
+		// TODO(pat.m): this isn't actually correct I don't think
+		// draw_buffers should effectively match the format of settings.color_attachments, with raw::NONE in gaps
 		let draw_buffers: Vec<_> = color_attachments.iter()
 			.map(|Attachment{attachment_point, ..}| *attachment_point)
 			.collect();
@@ -106,11 +109,23 @@ impl Framebuffer {
 	}
 
 	pub fn is_complete(&self) -> bool {
-		let status = unsafe {raw::CheckNamedFramebufferStatus(self.handle, raw::FRAMEBUFFER)};
+		let status = unsafe {raw::CheckNamedFramebufferStatus(self.handle, raw::DRAW_FRAMEBUFFER)};
 		match status {
 			0 => true,
 			_ => false,
 		}
+	}
+
+	pub fn depth_stencil_attachment(&self) -> Option<TextureKey> {
+		self.depth_stencil_attachment.as_ref().map(|attachment| attachment.texture_key)
+	}
+
+	pub fn color_attachment(&self, attachment_point: u32) -> Option<TextureKey> {
+		let attachment_point = raw::COLOR_ATTACHMENT0 + attachment_point;
+
+		self.color_attachments.iter()
+			.find(|attachment| attachment.attachment_point == attachment_point)
+			.map(|attachment| attachment.texture_key)
 	}
 }
 
@@ -121,7 +136,7 @@ pub struct FramebufferSettings {
 	size_mode: TextureSize,
 	depth_attachment: bool,
 	stencil_attachment: bool,
-	color_attachments: [Option<u32>; 8],
+	color_attachments: [Option<TextureFormat>; 8],
 }
 
 impl FramebufferSettings {
@@ -146,9 +161,9 @@ impl FramebufferSettings {
 		self.add_depth().add_stencil()
 	}
 
-	pub fn add_color(mut self, attachment_point: u32, gl_format: u32) -> Self {
+	pub fn add_color(mut self, attachment_point: u32, format: TextureFormat) -> Self {
 		assert!(attachment_point < 8);
-		self.color_attachments[attachment_point as usize] = Some(gl_format);
+		self.color_attachments[attachment_point as usize] = Some(format);
 		self
 	}
 }
