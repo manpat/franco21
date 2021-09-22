@@ -73,7 +73,7 @@ impl Context {
 
 	pub fn render_state(&mut self) -> RenderState<'_> {
 		RenderState {
-			resources: &mut self.resources,
+			resources: &self.resources,
 			backbuffer_size: self.backbuffer_size,
 		}
 	}
@@ -147,11 +147,11 @@ impl Context {
 
 
 pub struct RenderState<'ctx> {
-	resources: &'ctx mut Resources,
+	resources: &'ctx Resources,
 	backbuffer_size: Vec2i,
 }
 
-impl RenderState<'_> {
+impl<'ctx> RenderState<'ctx> {
 	pub fn set_wireframe(&mut self, wireframe_enabled: bool) {
 		let mode = match wireframe_enabled {
 			false => raw::FILL,
@@ -176,7 +176,7 @@ impl RenderState<'_> {
 		}
 	}
 
-	pub fn resources(&self) -> &'_ Resources {
+	pub fn resources(&self) -> &'ctx Resources {
 		self.resources
 	}
 
