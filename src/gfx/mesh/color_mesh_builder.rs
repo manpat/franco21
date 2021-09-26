@@ -36,8 +36,8 @@ impl<MD> PolyBuilder2D for ColorMeshBuilder<MD>
 	where MD: BorrowMut<MeshData<ColorVertex2D>>
 {
 	fn extend_2d(&mut self, vs: impl IntoIterator<Item=Vec2>, is: impl IntoIterator<Item=u16>) {
-		let color = self.color.into();
-		self.data.borrow_mut().extend(vs.into_iter().map(|v| ColorVertex2D::new(v, color)), is);
+		let color = self.color;
+		self.data.borrow_mut().extend(vs.into_iter().map(move |v| ColorVertex2D::new(v, color)), is);
 	}
 }
 
@@ -46,7 +46,7 @@ impl<MD> PolyBuilder3D for ColorMeshBuilder<MD>
 	where MD: BorrowMut<MeshData<ColorVertex>>
 {
 	fn extend_3d(&mut self, vs: impl IntoIterator<Item=Vec3>, is: impl IntoIterator<Item=u16>) {
-		let color = self.color.into();
-		self.data.borrow_mut().extend(vs.into_iter().map(|v| ColorVertex::new(v, color)), is);
+		let color = self.color;
+		self.data.borrow_mut().extend(vs.into_iter().map(move |v| ColorVertex::new(v, color)), is);
 	}
 }

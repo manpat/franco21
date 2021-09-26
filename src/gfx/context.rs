@@ -16,6 +16,8 @@ impl Context {
 			raw::Enable(raw::DEBUG_OUTPUT_SYNCHRONOUS);
 			raw::Enable(raw::PROGRAM_POINT_SIZE);
 
+			raw::Enable(raw::FRAMEBUFFER_SRGB);
+
 			raw::Enable(raw::DEPTH_TEST);
 			// raw::Enable(raw::BLEND);
 			// raw::BlendFunc(raw::DST_COLOR, raw::ZERO);
@@ -303,6 +305,11 @@ impl<'ctx> RenderState<'ctx> {
 	}
 
 	pub fn dispatch_compute(&self, x: u32, y: u32, z: u32) {
+		// see: GL_MAX_COMPUTE_WORK_GROUP_COUNT
+		assert!(x < 65535, "Work group exceeds guaranteed minimum size along x axis");
+		assert!(y < 65535, "Work group exceeds guaranteed minimum size along y axis");
+		assert!(z < 65535, "Work group exceeds guaranteed minimum size along z axis");
+
 		unsafe {
 			raw::DispatchCompute(x, y, z);
 		}

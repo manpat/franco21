@@ -7,6 +7,9 @@ pub fn init_window(sdl_video: &sdl2::VideoSubsystem, window_name: &str) -> Resul
 	gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
 	gl_attr.set_context_version(4, 5);
 	gl_attr.set_context_flags().debug().set();
+	
+	gl_attr.set_framebuffer_srgb_compatible(true);
+	gl_attr.set_stencil_size(8);
 
 	let window = sdl_video.window(window_name, 1366, 768)
 		.position_centered()
