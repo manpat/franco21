@@ -90,6 +90,13 @@ impl Color {
 	}
 }
 
+impl From<&Vec3> for Color {
+	fn from(o: &Vec3) -> Color { Color::rgb(o.x, o.y, o.z) }
+}
+impl From<&Vec4> for Color {
+	fn from(o: &Vec4) -> Color { Color::rgba(o.x, o.y, o.z, o.w) }
+}
+
 impl From<Vec3> for Color {
 	fn from(o: Vec3) -> Color { Color::rgb(o.x, o.y, o.z) }
 }
@@ -147,3 +154,22 @@ impl Ease<Color> for f32 {
 	impl_ease_for_color!(ease_bounce_out);
 	impl_ease_for_color!(ease_bounce_inout);
 }
+
+// fn srgb_to_linear(color: Color) -> Color {
+// 	Color {
+// 		r: srgb_channel_to_linear(color.r),
+// 		g: srgb_channel_to_linear(color.g),
+// 		b: srgb_channel_to_linear(color.b),
+// 		a: color.a
+// 	}
+// }
+
+
+// fn srgb_channel_to_linear(value: f32) -> f32 {
+// 	// https://en.wikipedia.org/wiki/SRGB#From_sRGB_to_CIE_XYZ
+// 	if value <= 0.04045 {
+// 		value / 12.92
+// 	} else {
+// 		((value + 0.055) / 1.055).powf(2.4)
+// 	}
+// }
