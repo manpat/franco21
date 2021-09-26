@@ -5,7 +5,8 @@ use std::convert::TryInto;
 use common::*;
 use failure::{ensure, bail, format_err};
 
-const SCENE_VERSION: u8 = 3;
+// version 4: convert vertex colours from srgb to linear
+const SCENE_VERSION: u8 = 4;
 
 pub fn load(data: &[u8]) -> ToyResult<Project> {
 	let reader = ToyReader { buf: data };

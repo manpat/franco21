@@ -17,7 +17,8 @@ from .util import swap_coords, swap_coords_scale
 # https://github.com/Project-Cartographer/H2V-Blender-Animation-Exporter/blob/master/io_scene_jma/export_jma.py
 # https://github.com/vika-sonne/batch-egg-file-animation-export/blob/master/__init__.py
 
-VERSION = 3
+# version 4: convert vertex colours from srgb to linear
+VERSION = 4
 
 
 

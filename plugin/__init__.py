@@ -3,7 +3,7 @@ bl_info = {
 	"author": "Patrick Monaghan",
 	"description": "Exports scenes in a format that wasm-toys can eat",
 	"category": "Import-Export",
-	"version": (0, 0, 1),
+	"version": (0, 0, 2),
 	"blender": (2, 80, 0),
 }
 

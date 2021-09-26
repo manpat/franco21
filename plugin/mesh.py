@@ -1,7 +1,7 @@
 import collections
 import bmesh
 
-from .util import swap_coords
+from .util import swap_coords, srgb_to_linear
 from . import anim
 
 Mesh = collections.namedtuple(
@@ -148,7 +148,10 @@ def write_mesh(ser, mesh):
 		ser.write_string(name)
 		ser.write_u16(len(data))
 		for el in data:
-			ser.write_v4(*el)
+			# Blender seems to store vertex colors in srgb,
+			# but since we're storing floats we might as well store linear colours.
+			# although, TODO: do we actually *want* to be storing floats? might be a bit excessive
+			ser.write_v4(*srgb_to_linear(el))
 
 	if mesh.animation_data is not None:
 		bones = mesh.animation_data['bones']
