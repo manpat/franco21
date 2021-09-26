@@ -36,7 +36,9 @@ impl Framebuffer {
 				(true, true) => (TextureFormat::DepthStencil, raw::DEPTH_STENCIL_ATTACHMENT),
 			};
 
-			let depth_stencil_tex = Texture::new(size_mode, backbuffer_size, depth_stencil_format);
+			let mut depth_stencil_tex = Texture::new(size_mode, backbuffer_size, depth_stencil_format);
+			depth_stencil_tex.set_filter(false, false);
+
 			Some(Attachment {
 				attachment_point: depth_stencil_attachment_point,
 				texture_key: resources.insert_texture(depth_stencil_tex)
@@ -70,12 +72,12 @@ impl Framebuffer {
 			raw::CreateFramebuffers(1, &mut fbo);
 
 			if let Some(Attachment{attachment_point, texture_key}) = depth_stencil_attachment {
-				let handle = resources.get(texture_key).handle;
+				let handle = resources.get(texture_key).texture_handle;
 				raw::NamedFramebufferTexture(fbo, attachment_point, handle, 0);
 			}
 
 			for &Attachment{attachment_point, texture_key} in color_attachments.iter() {
-				let handle = resources.get(texture_key).handle;
+				let handle = resources.get(texture_key).texture_handle;
 				raw::NamedFramebufferTexture(fbo, attachment_point, handle, 0);
 			}
 
@@ -94,14 +96,14 @@ impl Framebuffer {
 	// HACK: this should take &mut self probably, but can't while Resources uses RefCell nonsense
 	pub(super) fn rebind_attachments(&self, resources: &gfx::Resources) {
 		if let Some(Attachment{attachment_point, texture_key}) = self.depth_stencil_attachment {
-			let texture_handle = resources.get(texture_key).handle;
+			let texture_handle = resources.get(texture_key).texture_handle;
 			unsafe {
 				raw::NamedFramebufferTexture(self.handle, attachment_point, texture_handle, 0);
 			}
 		}
 
 		for &Attachment{attachment_point, texture_key} in self.color_attachments.iter() {
-			let handle = resources.get(texture_key).handle;
+			let handle = resources.get(texture_key).texture_handle;
 			unsafe {
 				raw::NamedFramebufferTexture(self.handle, attachment_point, handle, 0);
 			}

@@ -210,7 +210,7 @@ impl<'ctx> RenderState<'ctx> {
 		let texture = texture.get(self.resources);
 
 		unsafe {
-			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+			raw::BindImageTexture(binding, texture.texture_handle, level, layered, layer,
 				raw::READ_WRITE, texture.format().to_gl());
 		}
 	}
@@ -220,7 +220,7 @@ impl<'ctx> RenderState<'ctx> {
 		let texture = texture.get(self.resources);
 
 		unsafe {
-			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+			raw::BindImageTexture(binding, texture.texture_handle, level, layered, layer,
 				raw::READ_ONLY, texture.format().to_gl());
 		}
 	}
@@ -230,7 +230,7 @@ impl<'ctx> RenderState<'ctx> {
 		let texture = texture.get(self.resources);
 
 		unsafe {
-			raw::BindImageTexture(binding, texture.handle, level, layered, layer,
+			raw::BindImageTexture(binding, texture.texture_handle, level, layered, layer,
 				raw::WRITE_ONLY, texture.format().to_gl());
 		}
 	}
@@ -239,7 +239,8 @@ impl<'ctx> RenderState<'ctx> {
 		let texture = texture.get(self.resources);
 
 		unsafe {
-			raw::BindTextureUnit(binding, texture.handle);
+			raw::BindTextureUnit(binding, texture.texture_handle);
+			raw::BindSampler(binding, texture.sampler_handle);
 		}
 	}
 
