@@ -22,11 +22,11 @@ impl Resources {
 	}
 
 	pub(super) fn insert_texture(&mut self, texture: Texture) -> TextureKey {
-		self.inner.mutate(move |inner| inner.textures.insert((texture, Cell::default())))
+		self.inner.mutate(move |inner| inner.textures.insert((texture, BorrowState::new())))
 	}
 
 	pub(super) fn insert_framebuffer(&mut self, framebuffer: Framebuffer) -> FramebufferKey {
-		self.inner.mutate(move |inner| inner.framebuffers.insert((framebuffer, Cell::default())))
+		self.inner.mutate(move |inner| inner.framebuffers.insert((framebuffer, BorrowState::new())))
 	}
 
 	pub(super) fn on_resize(&mut self, backbuffer_size: Vec2i) {
@@ -101,20 +101,20 @@ impl ResourceKey for FramebufferKey {
 // See std::cell::RefCell
 #[derive(Debug)]
 struct ResourcesRefCell {
-	inner_borrow_state: Cell<isize>,
+	inner_borrow_state: BorrowState,
 	inner: UnsafeCell<ResourcesInner>,
 }
 
 #[derive(Debug)]
 struct ResourcesInner {
-	textures: SlotMap<TextureKey, (Texture, Cell<isize>)>,
-	framebuffers: SlotMap<FramebufferKey, (Framebuffer, Cell<isize>)>,
+	textures: SlotMap<TextureKey, (Texture, BorrowState)>,
+	framebuffers: SlotMap<FramebufferKey, (Framebuffer, BorrowState)>,
 }
 
 impl ResourcesRefCell {
 	fn new() -> ResourcesRefCell {
 		ResourcesRefCell {
-			inner_borrow_state: Cell::default(),
+			inner_borrow_state: BorrowState::new(),
 			inner: UnsafeCell::new(
 				ResourcesInner {
 					textures: SlotMap::with_key(),
@@ -126,35 +126,21 @@ impl ResourcesRefCell {
 
 	#[deprecated]
 	fn borrow(self: &Rc<ResourcesRefCell>) -> ResourceLock<ResourcesInner> {
-		let b = self.inner_borrow_state.get().wrapping_add(1);
-
-		// If inner_borrow_state previously signalled mutable borrow - fail
-		if b <= 0 {
-			panic!("Failed to borrow")
-		} else {
-			self.inner_borrow_state.set(b);
-			ResourceLock {
-				inner: Rc::clone(self),
-				resource: self.inner.get(),
-				resource_borrow_state: std::ptr::null(),
-			}
+		self.inner_borrow_state.borrow();
+		ResourceLock {
+			inner: Rc::clone(self),
+			resource: self.inner.get(),
+			resource_borrow_state: std::ptr::null(),
 		}
 	}
 
 	#[deprecated]
 	fn borrow_mut(self: &Rc<ResourcesRefCell>) -> ResourceLockMut<ResourcesInner> {
-		// see BorrowMutRef
-		match self.inner_borrow_state.get() {
-			0 => {
-				self.inner_borrow_state.set(-1);
-				ResourceLockMut {
-					inner: Rc::clone(self),
-					resource: self.inner.get(),
-					resource_borrow_state: std::ptr::null(),
-				}
-			}
-
-			_ => panic!("ResourcesRefCell already mutably borrowed")
+		self.inner_borrow_state.borrow_mut();
+		ResourceLockMut {
+			inner: Rc::clone(self),
+			resource: self.inner.get(),
+			resource_borrow_state: std::ptr::null(),
 		}
 	}
 
@@ -163,41 +149,29 @@ impl ResourcesRefCell {
 		where F: FnOnce(&mut ResourcesInner) -> R
 	{
 		// Mark ResourceInner as being mutably borrowed for the duration of function call
-		assert!(self.inner_borrow_state.get() == 0, "tried to mutably borrow ResourceInner while already borrowed mutably");
-		self.inner_borrow_state.set(-1);
+		self.inner_borrow_state.borrow_mut();
 
 		// TODO(pat.m): FIGURE OUT IF IT IS ACTUALLY SOUND TO RETURN STUFF HERE
 		// Its only for internal use so _should_ be fine, but even so
 		let result = f(unsafe { &mut *self.inner.get() });
 
-		assert!(self.inner_borrow_state.get() == -1);
-		self.inner_borrow_state.set(0);
+		self.inner_borrow_state.unborrow_mut();
 
 		result
 	}
 
 	fn borrow_resource<F, R>(self: &Rc<ResourcesRefCell>, f: F) -> ResourceLock<R>
-		where F: FnOnce(&ResourcesInner) -> &(R, Cell<isize>)
+		where F: FnOnce(&ResourcesInner) -> &(R, BorrowState)
 	{
 		// Mark ResourceInner as being borrowed - no changes to the collections can be made from this point
-		let new_total_borrow_state = self.inner_borrow_state.get() + 1;
-		if new_total_borrow_state <= 0 {
-			panic!("tried to borrow resource while ResourceInner borrowed mutably");
-		}
-
-		self.inner_borrow_state.set(new_total_borrow_state);
+		self.inner_borrow_state.borrow();
 
 		// Now that we've locked inner for read, we can safely dereference it, and get a reference to the resource
 		let inner = unsafe { &*self.inner.get() };
 		let (resource, resource_borrow_state) = f(inner);
 
 		// Mark resource itself as being borrowed
-		let new_resource_borrow_state = resource_borrow_state.get() + 1;
-		if new_resource_borrow_state <= 0 {
-			panic!("tried to immutably borrow resource while already mutably borrowed");
-		}
-
-		resource_borrow_state.set(new_resource_borrow_state);
+		resource_borrow_state.borrow();
 
 		ResourceLock {
 			inner: Rc::clone(self),
@@ -207,17 +181,12 @@ impl ResourcesRefCell {
 	}
 
 	fn borrow_resource_mut<F, R>(self: &Rc<ResourcesRefCell>, f: F) -> ResourceLockMut<R>
-		where F: FnOnce(&mut ResourcesInner) -> &mut (R, Cell<isize>)
+		where F: FnOnce(&mut ResourcesInner) -> &mut (R, BorrowState)
 	{
 		// Mark ResourceInner as being borrowed - no changes to the collections can be made from this point
 		// NOTE: mutable borrows of resources only immutably borrow ResourceInner - since individual resources
 		// track their own borrow state, and we only need to guarantee that those resources stay pinned while borrowed
-		let new_total_borrow_state = self.inner_borrow_state.get() + 1;
-		if new_total_borrow_state <= 0 {
-			panic!("tried to borrow resource while ResourceInner borrowed mutably");
-		}
-
-		self.inner_borrow_state.set(new_total_borrow_state);
+		self.inner_borrow_state.borrow();
 
 		// Now that we've locked inner for read, we can safely dereference it, and get a reference to the resource.
 		// NOTE: we are making the assumption that `f` DOES NOT modify the storage of resources, and only creates a
@@ -228,12 +197,7 @@ impl ResourcesRefCell {
 		let (resource, resource_borrow_state) = f(inner);
 
 		// Mark resource itself as being borrowed
-		let new_resource_borrow_state = resource_borrow_state.get() - 1;
-		if new_resource_borrow_state >= 0 {
-			panic!("tried to mutable borrow resource while already mutably borrowed");
-		}
-
-		resource_borrow_state.set(-1);
+		resource_borrow_state.borrow_mut();
 
 		ResourceLockMut {
 			inner: Rc::clone(self),
@@ -247,7 +211,7 @@ impl ResourcesRefCell {
 pub struct ResourceLock<T> {
 	inner: Rc<ResourcesRefCell>,
 	resource: *const T,
-	resource_borrow_state: *const Cell<isize>, // Can be null
+	resource_borrow_state: *const BorrowState, // Can be null
 }
 
 impl<T> std::ops::Deref for ResourceLock<T> {
@@ -262,15 +226,10 @@ impl<T> Drop for ResourceLock<T> {
 	fn drop(&mut self) {
 		// Unborrow resource if it is individually locked
 		if let Some(resource_borrow_state) = unsafe{self.resource_borrow_state.as_ref()} {
-			let borrow = resource_borrow_state.get();
-			assert!(borrow > 0);
-			resource_borrow_state.set(borrow - 1);
+			resource_borrow_state.unborrow();
 		}
 
-		// Unborrow ResourceInner
-		let borrow = self.inner.inner_borrow_state.get();
-		assert!(borrow > 0);
-		self.inner.inner_borrow_state.set(borrow - 1);
+		self.inner.inner_borrow_state.unborrow();
 	}
 }
 
@@ -279,7 +238,7 @@ impl<T> Drop for ResourceLock<T> {
 pub struct ResourceLockMut<T> {
 	inner: Rc<ResourcesRefCell>,
 	resource: *mut T,
-	resource_borrow_state: *const Cell<isize>, // Can be null
+	resource_borrow_state: *const BorrowState, // Can be null
 }
 
 impl<T> std::ops::Deref for ResourceLockMut<T> {
@@ -300,26 +259,48 @@ impl<T> Drop for ResourceLockMut<T> {
 	fn drop(&mut self) {
 		// Unborrow resource if it is individually locked
 		if let Some(resource_borrow_state) = unsafe{self.resource_borrow_state.as_ref()} {
-			let borrow = resource_borrow_state.get();
-			assert!(borrow < 0);
-			resource_borrow_state.set(borrow + 1);
+			resource_borrow_state.unborrow_mut();
 
-			// Unborrow ResourceInner
 			// NOTE: mutable borrows of resources only immutably borrow ResourceInner
-			let borrow = self.inner.inner_borrow_state.get();
-			assert!(borrow > 0);
-			self.inner.inner_borrow_state.set(borrow - 1);
+			self.inner.inner_borrow_state.unborrow();
 		} else {
-			// Unborrow ResourceInner
-			let borrow = self.inner.inner_borrow_state.get();
-			assert!(borrow < 0);
-			self.inner.inner_borrow_state.set(borrow + 1);
+			self.inner.inner_borrow_state.unborrow_mut();
 		}
 	}
 }
 
 
 
+#[derive(Debug)]
+struct BorrowState(Cell<isize>);
+
+impl BorrowState {
+	fn new() -> Self {
+		BorrowState(Cell::new(0))
+	}
+
+	fn borrow(&self) {
+		let new_borrow_state = self.0.get() + 1;
+		assert!(new_borrow_state > 0, "tried to immutably borrow while already mutably borrowed");
+		self.0.set(new_borrow_state);
+	}
+
+	fn unborrow(&self) {
+		let new_borrow_state = self.0.get() - 1;
+		assert!(new_borrow_state >= 0);
+		self.0.set(new_borrow_state);
+	}
+
+	fn borrow_mut(&self) {
+		assert!(self.0.get() == 0, "tried to mutably borrow while already borrowed");
+		self.0.set(-1);
+	}
+
+	fn unborrow_mut(&self) {
+		assert!(self.0.get() == -1);
+		self.0.set(0);
+	}
+}
 
 
 // #[derive(Clone, Debug)]
