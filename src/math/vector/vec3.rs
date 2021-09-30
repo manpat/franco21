@@ -26,8 +26,8 @@ impl Vec3 {
 	pub const fn from_z(z: f32) -> Vec3 { Vec3::new(0.0, 0.0, z) }
 
 	pub fn to_tuple(&self) -> (f32,f32,f32) { (self.x, self.y, self.z) }
-	pub fn to_xy(self) -> Vec2 { Vec2::new(self.x, self.y) }
-	pub fn to_xz(self) -> Vec2 { Vec2::new(self.x, self.z) }
+	pub fn to_xy(&self) -> Vec2 { Vec2::new(self.x, self.y) }
+	pub fn to_xz(&self) -> Vec2 { Vec2::new(self.x, self.z) }
 	pub fn extend(&self, w: f32) -> Vec4 { Vec4::new(self.x, self.y, self.z, w) }
 
 	pub fn length(&self) -> f32 { self.dot(*self).sqrt() }
