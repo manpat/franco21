@@ -1,6 +1,10 @@
 
 
 
+git remote add common git@github.com:manpat/common-rs.git
+git remote add toy git@github.com:manpat/toy-rs.git
+git remote add toybox git@github.com:manpat/toybox-rs.git
+
 
 git subtree push -P common-rs common master
 git subtree push -P toy-rs toy master
