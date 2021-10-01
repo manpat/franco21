@@ -13,7 +13,7 @@ toybox = { path = "toybox-rs" }
 [patch."https://github.com/manpat/common-rs.git"]
 common = { path = "common-rs" }
 
-# [patch."https://github.com/manpat/toy-rs.git"]
-# toy = { path = "toy-rs" }
+[patch."https://github.com/manpat/toy-rs.git"]
+toy = { path = "toy-rs" }
 
 
