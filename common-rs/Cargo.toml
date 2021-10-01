@@ -1,0 +1,8 @@
+[package]
+name = "common"
+version = "0.1.2"
+edition = "2018"
+authors = ["manpat <pat@patsown.com>"]
+
+[dependencies]
+rand = "0.4"
