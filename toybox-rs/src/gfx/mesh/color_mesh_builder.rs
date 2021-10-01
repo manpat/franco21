@@ -1,7 +1,7 @@
 use common::*;
 use crate::gfx::vertex::{ColorVertex, ColorVertex2D};
 use crate::gfx::mesh::{MeshData, PolyBuilder2D, PolyBuilder3D, ColoredPolyBuilder};
-use std::borrow::BorrowMut;
+use std::ops::DerefMut;
 
 
 pub struct ColorMeshBuilder<MD> {
@@ -33,20 +33,20 @@ impl<MD> ColoredPolyBuilder for ColorMeshBuilder<MD> {
 
 
 impl<MD> PolyBuilder2D for ColorMeshBuilder<MD>
-	where MD: BorrowMut<MeshData<ColorVertex2D>>
+	where MD: DerefMut<Target=MeshData<ColorVertex2D>>
 {
 	fn extend_2d(&mut self, vs: impl IntoIterator<Item=Vec2>, is: impl IntoIterator<Item=u16>) {
 		let color = self.color;
-		self.data.borrow_mut().extend(vs.into_iter().map(move |v| ColorVertex2D::new(v, color)), is);
+		self.data.deref_mut().extend(vs.into_iter().map(move |v| ColorVertex2D::new(v, color)), is);
 	}
 }
 
 
 impl<MD> PolyBuilder3D for ColorMeshBuilder<MD>
-	where MD: BorrowMut<MeshData<ColorVertex>>
+	where MD: DerefMut<Target=MeshData<ColorVertex>>
 {
 	fn extend_3d(&mut self, vs: impl IntoIterator<Item=Vec3>, is: impl IntoIterator<Item=u16>) {
 		let color = self.color;
-		self.data.borrow_mut().extend(vs.into_iter().map(move |v| ColorVertex::new(v, color)), is);
+		self.data.deref_mut().extend(vs.into_iter().map(move |v| ColorVertex::new(v, color)), is);
 	}
 }

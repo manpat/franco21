@@ -31,6 +31,12 @@ macro_rules! declare_input_context {
 				}
 			}
 
+			pub fn new_active(system: &mut $crate::input::InputSystem) -> Self {
+				let __ctx = Self::new(system);
+				system.enter_context(__ctx.context_id());
+				__ctx
+			}
+
 			pub fn context_id(&self) -> $crate::input::ContextID { self.__context_id }
 		}
 	};

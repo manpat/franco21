@@ -4,7 +4,7 @@ pub mod action;
 pub mod context;
 pub mod context_macro;
 
-pub use system::InputSystem;
+pub use system::{InputSystem, FrameState};
 pub use raw::{MouseButton, Scancode, Keycode, Button};
 pub use action::*;
 pub use context::{ContextID, InputContext};
