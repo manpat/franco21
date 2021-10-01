@@ -111,6 +111,11 @@ impl Project {
 		self.entities.iter()
 			.map(move |entity| EntityRef::from(self, entity))
 	}
+
+	pub fn entities_with_prefix<'t, 'p: 't>(&'t self, prefix: &'p str) -> impl Iterator<Item=EntityRef<'t>> {
+		self.entities()
+			.filter(move |entity| entity.name.starts_with(prefix))
+	}
 }
 
 impl MeshData {
@@ -132,6 +137,11 @@ impl<'t> SceneRef<'t> {
 		self.scene.entities.iter()
 			.map(move |&id| &file.entities[id as usize - 1])
 			.map(move |entity| EntityRef::from(file, entity))
+	}
+
+	pub fn entities_with_prefix<'p: 't>(&self, prefix: &'p str) -> impl Iterator<Item=EntityRef<'t>> {
+		self.entities()
+			.filter(move |entity| entity.name.starts_with(prefix))
 	}
 
 	pub fn find_entity(&self, name: &str) -> Option<EntityRef<'t>> {
