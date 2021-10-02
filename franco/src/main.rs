@@ -13,20 +13,26 @@ fn main() -> Result<()> {
 	let mut engine = toybox::Engine::new("franco21")?;
 
 	engine.gfx.add_shader_import("3d", shaders::THREE_D_COMMON);
+	engine.gfx.add_shader_import("water", shaders::WATER_COMMON);
 
 	let mut main_camera_ubo = engine.gfx.new_buffer(gfx::BufferUsage::Stream);
 	engine.gfx.render_state().bind_uniform_buffer(0, main_camera_ubo);
 
+	let mut main_world_ubo = engine.gfx.new_buffer(gfx::BufferUsage::Stream);
+	engine.gfx.render_state().bind_uniform_buffer(1, main_world_ubo);
+
 	debug::init(&mut engine.gfx);
 
-	let debug_ctl = controller::DebugController::new(&mut engine);
+	let mut debug_ctl = controller::DebugController::new(&mut engine);
 	let mut global_ctl = controller::GlobalController::new(&mut engine);
 	let mut camera_ctl = controller::CameraController::new(&mut engine);
+	let mut player_ctl = controller::PlayerController::new(&mut engine);
 
 	let mut model = model::Model::new()?;
 
 	let mut boat_view = view::BoatView::new(&mut engine.gfx, &model.resources)?;
-	let water_view = view::WaterView::new(&mut engine.gfx, &model.resources)?;
+	let mut water_view = view::WaterView::new(&mut engine.gfx, &model.resources)?;
+	let mut island_view = view::IslandView::new(&mut engine.gfx, &model.resources)?;
 
 	'main: loop {
 		engine.process_events();
@@ -37,25 +43,33 @@ fn main() -> Result<()> {
 		debug_ctl.update(&mut engine, &mut model);
 		global_ctl.update(&mut engine, &mut model.global);
 		camera_ctl.update(&mut engine, &mut model.camera);
+		player_ctl.update(&mut engine, &mut model);
 
 		boat_view.update(&model);
+		water_view.update(&model);
+		island_view.update(&model);
 
 
 		{
 			let mut mb = debug::mesh_builder();
-			mb.set_color(Color::rgb(1.0, 1.0, 0.5));
 
-			let txform = Mat3x4::scale(
-				Vec3{y: 0.1, .. model.world.map.size.to_x0z() * 10.0}
-			);
+			let player_pos_map = model.player.map_position;
 
-			mb.build(gfx::geom::Cuboid::from_matrix(txform));
+			// mb.set_color(Color::rgb(1.0, 1.0, 0.5));
+
+			// let txform = Mat3x4::scale_translate(
+			// 	Vec3{y: 0.1, .. model.world.map.size.to_x0z() * model::MAP_SCALE},
+			// 	model::map_to_world(-player_pos_map).to_x0z()
+			// );
+
+			// mb.build(gfx::geom::Cuboid::from_matrix(txform));
+
 
 			mb.set_color(Color::rgb(1.0, 0.0, 0.0));
 			for object in model.world.map.objects.iter() {
 				let txform = Mat3x4::scale_translate(
 					Vec3::splat(4.0),
-					object.map_position.to_x0z() * 10.0 + Vec3::from_y(2.0)
+					model::map_to_world(object.map_position - player_pos_map).to_x0z() + Vec3::from_y(2.0)
 				);
 
 				mb.build(gfx::geom::Cuboid::from_matrix(txform));
@@ -66,6 +80,9 @@ fn main() -> Result<()> {
 		let camera_uniforms = build_camera_uniforms(&model.camera, engine.gfx.aspect());
 		main_camera_ubo.upload(&[camera_uniforms]);
 
+		let world_uniforms = build_world_uniforms(&model);
+		main_world_ubo.upload(&[world_uniforms]);
+
 
 		let mut view_ctx = view::ViewContext::new(engine.gfx.render_state());
 
@@ -73,6 +90,7 @@ fn main() -> Result<()> {
 		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 
 		boat_view.draw(&mut view_ctx);
+		island_view.draw(&mut view_ctx);
 		water_view.draw(&mut view_ctx);
 
 		debug::draw(&mut view_ctx.gfx);
@@ -94,7 +112,6 @@ struct CameraUniforms {
 	// NOTE: align to Vec4s
 }
 
-
 fn build_camera_uniforms(camera: &model::Camera, aspect: f32) -> CameraUniforms {
 	CameraUniforms {
 		projection_view: {
@@ -105,5 +122,23 @@ fn build_camera_uniforms(camera: &model::Camera, aspect: f32) -> CameraUniforms 
 				* camera_orientation
 				* Mat4::translate(-camera.position)
 		},
+	}
+}
+
+
+
+
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+struct WorldUniforms {
+	player_position: Vec2,
+	// _pad: [f32; 2],
+	// NOTE: align to Vec4s
+}
+
+fn build_world_uniforms(model: &model::Model) -> WorldUniforms {
+	WorldUniforms {
+		player_position: model.player.map_position,
 	}
 }

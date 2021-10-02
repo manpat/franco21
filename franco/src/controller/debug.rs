@@ -5,6 +5,7 @@ toybox::declare_input_context! {
 	struct Actions "Debug" {
 		trigger toggle_active { "Toggle" [Scancode::Grave] }
 		trigger toggle_flycam { "Toggle Fly Cam" [Scancode::V] }
+		trigger toggle_wireframe { "Toggle Wireframe" [Scancode::Z] }
 
 		trigger dump_model { "Dump Model" [Scancode::F12] }
 	}
@@ -21,6 +22,8 @@ toybox::declare_input_context! {
 pub struct DebugController {
 	actions: Actions,
 	active_actions: ActiveActions,
+
+	wireframe_enabled: bool,
 }
 
 impl DebugController {
@@ -28,10 +31,12 @@ impl DebugController {
 		DebugController {
 			actions: Actions::new_active(&mut engine.input),
 			active_actions: ActiveActions::new(&mut engine.input),
+
+			wireframe_enabled: false,
 		}
 	}
 
-	pub fn update(&self, engine: &mut toybox::Engine, model: &mut model::Model) {
+	pub fn update(&mut self, engine: &mut toybox::Engine, model: &mut model::Model) {
 		let currently_active = engine.input.is_context_active(self.active_actions.context_id());
 
 		if engine.input.frame_state().active(self.actions.toggle_active) {
@@ -64,6 +69,11 @@ impl DebugController {
 			println!("{:#?}", model.camera);
 			println!("{:#?}", model.world);
 			println!("{:#?}", model.player);
+		}
+
+		if input_state.active(self.actions.toggle_wireframe) {
+			self.wireframe_enabled = !self.wireframe_enabled;
+			engine.gfx.render_state().set_wireframe(self.wireframe_enabled);
 		}
 	}
 }

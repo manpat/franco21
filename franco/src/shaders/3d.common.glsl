@@ -5,6 +5,8 @@ layout(std140, row_major, binding = 0) uniform CameraData {
 } u_camera;
 
 layout(std140, row_major, binding = 1) uniform WorldData {
-	mat4 global_transform;
+	vec2 player_position;
 } u_world;
+
+
 

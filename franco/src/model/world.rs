@@ -1,6 +1,9 @@
 use crate::prelude::*;
 
 
+pub const MAP_SCALE: f32 = 20.0;
+
+
 #[derive(Debug)]
 pub struct World {
 	pub map: Map,
@@ -49,4 +52,11 @@ impl Map {
 pub struct MapObject {
 	pub map_position: Vec2,
 
+}
+
+
+
+
+pub fn map_to_world(map: Vec2) -> Vec2 {
+	map * MAP_SCALE * Vec2::new(1.0, -1.0)
 }

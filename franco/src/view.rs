@@ -1,10 +1,13 @@
 use crate::prelude::*;
 
 pub mod boat;
-pub mod water;
-
 pub use boat::*;
+
+pub mod water;
 pub use water::*;
+
+pub mod island;
+pub use island::*;
 
 
 pub struct ViewContext<'engine> {

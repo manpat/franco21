@@ -4,6 +4,7 @@ use crate::prelude::*;
 pub struct Player {
 	pub map_position: Vec2,
 	pub heading: f32,
+	pub speed: f32,
 }
 
 impl Player {
@@ -11,6 +12,7 @@ impl Player {
 		Player {
 			map_position: Vec2::zero(),
 			heading: 0.0,
+			speed: 0.00,
 		}
 	}
 }

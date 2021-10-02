@@ -40,15 +40,19 @@ impl BoatView {
 	}
 
 	pub fn update(&mut self, model: &model::Model) {
+		let speed = model.player.speed;
+		let factor = (speed*20.0).clamp(0.0, 1.0);
+
 		let uniforms = BoatUniforms {
-			transform: Mat4::translate(Vec3::from_y(self.time.cos() * 0.1))
-				* Mat4::rotate_y(PI/3.0 + self.time/4.0 + model.player.heading)
-				* Mat4::rotate_x(self.time.sin() * PI/32.0),
+			transform: Mat4::translate(Vec3::from_y((0.5 + self.time.sin()) * factor * 0.5))
+				* Mat4::rotate_y(model.player.heading)
+				* Mat4::rotate_x((self.time/2.0).sin() * PI/32.0 * factor)
+				* Mat4::rotate_z((0.5 + self.time.cos()) * PI/16.0 * factor),
 		};
 
 		self.boat_ubo.upload(&[uniforms]);
 
-		self.time += 1.0 / 60.0;
+		self.time += speed;
 	}
 
 	pub fn draw(&self, ctx: &mut view::ViewContext) {
