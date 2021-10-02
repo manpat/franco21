@@ -3,12 +3,14 @@ pub use std::f32::consts::TAU;
 pub use std::f32::consts::SQRT_2;
 pub use std::f32::consts::FRAC_1_SQRT_2 as INV_SQRT_2;
 
+pub mod aabb;
 pub mod color;
 pub mod plane;
 pub mod vector;
 pub mod matrix;
 pub mod quaternion;
 
+pub use aabb::*;
 pub use plane::*;
 pub use color::*;
 pub use vector::*;
