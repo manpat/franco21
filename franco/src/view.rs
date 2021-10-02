@@ -9,6 +9,9 @@ pub use water::*;
 pub mod island;
 pub use island::*;
 
+pub mod ui;
+pub use ui::*;
+
 
 pub struct ViewContext<'engine> {
 	pub gfx: gfx::RenderState<'engine>,

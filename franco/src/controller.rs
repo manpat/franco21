@@ -1,10 +1,14 @@
 pub mod global;
-pub mod camera;
-pub mod debug;
-pub mod player;
-
-
 pub use global::*;
+
+pub mod camera;
 pub use camera::*;
+
+pub mod debug;
 pub use debug::*;
+
+pub mod player;
 pub use player::*;
+
+pub mod ui;
+pub use ui::*;

@@ -16,10 +16,8 @@ fn main() -> Result<()> {
 	engine.gfx.add_shader_import("water", shaders::WATER_COMMON);
 
 	let mut main_camera_ubo = engine.gfx.new_buffer(gfx::BufferUsage::Stream);
-	engine.gfx.render_state().bind_uniform_buffer(0, main_camera_ubo);
-
+	let mut ui_camera_ubo = engine.gfx.new_buffer(gfx::BufferUsage::Stream);
 	let mut main_world_ubo = engine.gfx.new_buffer(gfx::BufferUsage::Stream);
-	engine.gfx.render_state().bind_uniform_buffer(1, main_world_ubo);
 
 	debug::init(&mut engine.gfx);
 
@@ -27,12 +25,14 @@ fn main() -> Result<()> {
 	let mut global_ctl = controller::GlobalController::new(&mut engine);
 	let mut camera_ctl = controller::CameraController::new(&mut engine);
 	let mut player_ctl = controller::PlayerController::new(&mut engine);
+	let mut ui_ctl = controller::UiController::new(&mut engine);
 
 	let mut model = model::Model::new()?;
 
 	let mut boat_view = view::BoatView::new(&mut engine.gfx, &model.resources)?;
 	let mut water_view = view::WaterView::new(&mut engine.gfx, &model.resources)?;
 	let mut island_view = view::IslandView::new(&mut engine.gfx, &model.resources)?;
+	let mut ui_view = view::UiView::new(&mut engine.gfx, &model.resources)?;
 
 	'main: loop {
 		engine.process_events();
@@ -44,10 +44,12 @@ fn main() -> Result<()> {
 		global_ctl.update(&mut engine, &mut model.global);
 		camera_ctl.update(&mut engine, &mut model.camera);
 		player_ctl.update(&mut engine, &mut model);
+		ui_ctl.update(&mut engine, &mut model);
 
 		boat_view.update(&model);
 		water_view.update(&model);
 		island_view.update(&model);
+		ui_view.update(&model);
 
 
 		{
@@ -69,7 +71,7 @@ fn main() -> Result<()> {
 			for object in model.world.map.objects.iter() {
 				let txform = Mat3x4::scale_translate(
 					Vec3::splat(4.0),
-					model::map_to_world(object.map_position - player_pos_map).to_x0z() + Vec3::from_y(2.0)
+					model::map_to_world(object.map_position - player_pos_map).to_x0z() + Vec3::from_y(8.0)
 				);
 
 				mb.build(gfx::geom::Cuboid::from_matrix(txform));
@@ -80,6 +82,9 @@ fn main() -> Result<()> {
 		let camera_uniforms = build_camera_uniforms(&model.camera, engine.gfx.aspect());
 		main_camera_ubo.upload(&[camera_uniforms]);
 
+		let camera_uniforms = build_ui_camera_uniforms(engine.gfx.aspect());
+		ui_camera_ubo.upload(&[camera_uniforms]);
+
 		let world_uniforms = build_world_uniforms(&model);
 		main_world_ubo.upload(&[world_uniforms]);
 
@@ -89,11 +94,19 @@ fn main() -> Result<()> {
 		view_ctx.gfx.set_clear_color(Color::hsv(220.0, 0.5, 0.9));
 		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 
+		view_ctx.gfx.bind_uniform_buffer(0, main_camera_ubo);
+		view_ctx.gfx.bind_uniform_buffer(1, main_world_ubo);
+
 		boat_view.draw(&mut view_ctx);
 		island_view.draw(&mut view_ctx);
 		water_view.draw(&mut view_ctx);
 
 		debug::draw(&mut view_ctx.gfx);
+
+		view_ctx.gfx.clear(gfx::ClearMode::DEPTH);
+		view_ctx.gfx.bind_uniform_buffer(0, ui_camera_ubo);
+
+		ui_view.draw(&mut view_ctx);
 
 		engine.end_frame();
 	}
@@ -126,6 +139,15 @@ fn build_camera_uniforms(camera: &model::Camera, aspect: f32) -> CameraUniforms 
 }
 
 
+fn build_ui_camera_uniforms(aspect: f32) -> CameraUniforms {
+	CameraUniforms {
+		projection_view: {
+			Mat4::ortho_aspect(model::UI_SAFE_REGION, aspect, 0.0, 10.0)
+			// Mat4::perspective(PI/3.0, aspect, 1.0, 20.0)
+			// 	* Mat4::scale_translate(Vec3::splat(0.5 / model::UI_SAFE_REGION), Vec3::from_z(-1.0))
+		}
+	}
+}
 
 
 
