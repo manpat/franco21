@@ -42,7 +42,7 @@ fn main() -> Result<()> {
 
 		debug_ctl.update(&mut engine, &mut model);
 		global_ctl.update(&mut engine, &mut model.global);
-		camera_ctl.update(&mut engine, &mut model.camera);
+		camera_ctl.update(&mut engine, &mut model);
 		player_ctl.update(&mut engine, &mut model);
 		ui_ctl.update(&mut engine, &mut model);
 
@@ -91,7 +91,7 @@ fn main() -> Result<()> {
 
 		let mut view_ctx = view::ViewContext::new(engine.gfx.render_state());
 
-		view_ctx.gfx.set_clear_color(Color::hsv(220.0, 0.5, 0.9));
+		view_ctx.gfx.set_clear_color(Color::hsv(200.0, 0.5, 0.9));
 		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 
 		view_ctx.gfx.bind_uniform_buffer(0, main_camera_ubo);
@@ -142,7 +142,7 @@ fn build_camera_uniforms(camera: &model::Camera, aspect: f32) -> CameraUniforms 
 fn build_ui_camera_uniforms(aspect: f32) -> CameraUniforms {
 	CameraUniforms {
 		projection_view: {
-			Mat4::ortho_aspect(model::UI_SAFE_REGION, aspect, 0.0, 10.0)
+			Mat4::ortho_aspect(model::UI_SAFE_REGION, aspect, -10.0, 10.0)
 			// Mat4::perspective(PI/3.0, aspect, 1.0, 20.0)
 			// 	* Mat4::scale_translate(Vec3::splat(0.5 / model::UI_SAFE_REGION), Vec3::from_z(-1.0))
 		}

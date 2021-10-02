@@ -45,15 +45,9 @@ impl DebugController {
 			} else {
 				engine.input.enter_context(self.active_actions.context_id());
 			}
-
-			// debug_model.active = !currently_active;
 		}
 
 		let input_state = engine.input.frame_state();
-
-		// if let Some(pos) = input_state.mouse(self.active_actions.mouse) {
-		// 	debug_model.mouse_pos = pos;
-		// }
 
 		if input_state.active(self.actions.toggle_flycam) {
 			use model::camera::ControlMode;

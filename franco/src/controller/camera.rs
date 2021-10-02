@@ -9,12 +9,19 @@ toybox::declare_input_context! {
 	struct OrbitCameraActions "Orbit Camera Control" {
 		trigger zoom_out { "Zoom Out" [Scancode::Minus] }
 		trigger zoom_in { "Zoom In" [Scancode::Equals] }
+	}
+}
+
+toybox::declare_input_context! {
+	struct ActiveOrbitCameraActions "ActiveOrbit Camera Control" {
 		mouse mouse { "Mouse" [1.0] }
 	}
 }
 
 toybox::declare_input_context! {
 	struct DebugCameraActions "Debug Camera Control" {
+		priority [20]
+
 		state forward { "Forward" [Scancode::W] }
 		state back { "Back" [Scancode::S] }
 		state left { "Left" [Scancode::A] }
@@ -26,6 +33,7 @@ toybox::declare_input_context! {
 
 pub struct CameraController {
 	orbit_actions: OrbitCameraActions,
+	active_orbit_actions: ActiveOrbitCameraActions,
 	debug_actions: DebugCameraActions,
 	zoom: f32,
 
@@ -37,14 +45,17 @@ impl CameraController {
 	pub fn new(engine: &mut toybox::Engine) -> Self {
 		CameraController {
 			orbit_actions: OrbitCameraActions::new_active(&mut engine.input),
+			active_orbit_actions: ActiveOrbitCameraActions::new(&mut engine.input),
 			debug_actions: DebugCameraActions::new(&mut engine.input),
-			zoom: 20.0,
+			zoom: 30.0,
 
 			prev_mode: ControlMode::OrbitPlayer,
 		}
 	}
 
-	pub fn update(&mut self, engine: &mut toybox::Engine, camera: &mut model::Camera) {
+	pub fn update(&mut self, engine: &mut toybox::Engine, model: &mut model::Model) {
+		let camera = &mut model.camera;
+
 		if camera.control_mode != self.prev_mode {
 			engine.input.leave_context(self.orbit_actions.context_id());
 			engine.input.leave_context(self.debug_actions.context_id());
@@ -57,26 +68,31 @@ impl CameraController {
 			}
 		}
 
-		let frame_state = engine.input.frame_state();
-
 		match camera.control_mode {
-			ControlMode::OrbitPlayer => self.update_orbit(camera, frame_state),
-			ControlMode::FreeFly => self.update_debug(camera, frame_state),
+			ControlMode::OrbitPlayer => self.update_orbit(camera, &mut engine.input, model.ui.dragging_unclaimed_area),
+			ControlMode::FreeFly => self.update_debug(camera, engine.input.frame_state()),
 		}
 	}
 
 
-	fn update_orbit(&mut self, camera: &mut model::Camera, input: &toybox::input::FrameState) {
-		if let Some(mouse) = input.mouse(self.orbit_actions.mouse) {
+	fn update_orbit(&mut self, camera: &mut model::Camera, input: &mut toybox::input::InputSystem, dragging: bool) {
+		if dragging && !input.is_context_active(self.active_orbit_actions.context_id()) {
+			input.enter_context(self.active_orbit_actions.context_id());
+		} else if !dragging && input.is_context_active(self.active_orbit_actions.context_id()) {
+			input.leave_context(self.active_orbit_actions.context_id());
+		}
+
+		let input_state = input.frame_state();
+		if let Some(mouse) = input_state.mouse(self.active_orbit_actions.mouse) {
 			let (pitch_min, pitch_max) = ORBIT_CAMERA_PITCH_LIMIT;
 
 			camera.yaw -= mouse.x * 0.5;
 			camera.pitch = (camera.pitch + mouse.y as f32 * 0.5).clamp(pitch_min, pitch_max);
 		}
 
-		if input.active(self.orbit_actions.zoom_out) {
+		if input_state.active(self.orbit_actions.zoom_out) {
 			self.zoom *= 1.2;
-		} else if input.active(self.orbit_actions.zoom_in) {
+		} else if input_state.active(self.orbit_actions.zoom_in) {
 			self.zoom /= 1.2;
 		}
 

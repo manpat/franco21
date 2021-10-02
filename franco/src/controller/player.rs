@@ -5,8 +5,6 @@ toybox::declare_input_context! {
 	struct PlayerActions "Player Control" {
 		state forward { "Forward" [Scancode::W] }
 		state back { "Back" [Scancode::S] }
-		state left { "Left" [Scancode::A] }
-		state right { "Right" [Scancode::D] }
 		// mouse mouse { "Mouse" [1.0] }
 	}
 }
@@ -38,13 +36,15 @@ impl PlayerController {
 		let heading_factor = (1.0 - model.player.speed*10.0).clamp(0.1, 1.0);
 		let turn_rate = 0.5*PI/60.0 * heading_factor;
 
-		if input.active(self.actions.left) {
-			model.player.heading += turn_rate;
-		}
+		// if input.active(self.actions.left) {
+		// 	model.player.heading += turn_rate;
+		// }
 
-		if input.active(self.actions.right) {
-			model.player.heading -= turn_rate;
-		}
+		// if input.active(self.actions.right) {
+		// 	model.player.heading -= turn_rate;
+		// }
+
+		model.player.heading += model.ui.wheel.angle/3.0 * heading_factor / 60.0;
 
 		let map_velocity = Vec2::from_angle(model.player.heading) * model.player.speed;
 		model.player.map_position += map_velocity;

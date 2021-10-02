@@ -34,7 +34,7 @@ impl Map {
 
 		let objects = scene.entities_with_prefix("MAP_")
 			.map(|entity| MapObject {
-				map_position: entity.position.to_xz(),
+				map_position: entity.position.to_xz() * Vec2::new(1.0, -1.0),
 			})
 			.collect();
 
