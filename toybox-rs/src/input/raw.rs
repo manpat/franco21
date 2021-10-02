@@ -8,6 +8,16 @@ pub enum Button {
 	Key(Scancode),
 }
 
+impl Button {
+	pub fn is_mouse(&self) -> bool {
+		matches!(self, Button::Mouse(_))
+	}
+
+	pub fn is_key(&self) -> bool {
+		matches!(self, Button::Key(_))
+	}
+}
+
 
 impl From<MouseButton> for Button {
 	fn from(mb: MouseButton) -> Button {

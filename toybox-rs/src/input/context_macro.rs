@@ -40,6 +40,49 @@ macro_rules! declare_input_context {
 			pub fn context_id(&self) -> $crate::input::ContextID { self.__context_id }
 		}
 	};
+
+	(
+		struct $context_ident:ident $context_name:tt {
+			priority [$priority:expr]
+
+			$(
+				$binding_type:ident $binding_ident:ident { $( $binding_name_and_default:tt )+ }
+			)*
+		}
+	) => {
+		#[derive(Copy, Clone, Debug)]
+		pub struct $context_ident {
+			__context_id: $crate::input::ContextID,
+
+			$(
+				pub $binding_ident: $crate::input::ActionID,
+			)*
+		}
+
+		impl $context_ident {
+			pub fn new(system: &mut $crate::input::InputSystem) -> Self {
+				let mut __ctx = system.new_context($context_name);
+				__ctx.set_priority($priority);
+
+				$(
+					let $binding_ident = $crate::__input__new_action!(__ctx, $binding_type, $($binding_name_and_default)+);
+				)*
+
+				Self {
+					__context_id: __ctx.build(),
+					$( $binding_ident, )*
+				}
+			}
+
+			pub fn new_active(system: &mut $crate::input::InputSystem) -> Self {
+				let __ctx = Self::new(system);
+				system.enter_context(__ctx.context_id());
+				__ctx
+			}
+
+			pub fn context_id(&self) -> $crate::input::ContextID { self.__context_id }
+		}
+	};
 }
 
 

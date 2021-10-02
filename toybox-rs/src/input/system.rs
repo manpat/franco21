@@ -78,6 +78,9 @@ impl InputSystem {
 		if self.active_contexts_changed {
 			self.active_contexts_changed = false;
 
+			let contexts = &self.contexts;
+			self.active_contexts.sort_by_key(move |id| contexts.get(id.0).map(|ctx| ctx.priority()));
+
 			// Find last active context using mouse input; we want to enable relative mouse mode if it's relative
 			let should_capture_mouse = self.active_contexts.iter().rev()
 				.flat_map(|&ContextID(id)| self.contexts.get(id))
@@ -110,9 +113,18 @@ impl InputSystem {
 
 			&Event::MouseMotion { xrel, yrel, x, y, .. } => {
 				let Vec2{x: w, y: h} = self.mouse_interactive_region;
+				let aspect = w/h;
 				// TODO(pat.m): is it actually useful to remap coordinates like this?
-				let mouse_x =  (x as f32 / w * 2.0 - 1.0) * (w/h);
+				let mouse_x = x as f32 / w * 2.0 - 1.0;
 				let mouse_y = -(y as f32 / h * 2.0 - 1.0);
+
+				// Maintain a 1x1 safe region in center screen
+				let (mouse_x, mouse_y) = if aspect > 1.0 {
+					(mouse_x * aspect, mouse_y)
+				} else {
+					(mouse_x, mouse_y / aspect)
+				};
+
 				self.mouse_absolute = Some(Vec2::new(mouse_x, mouse_y));
 
 				let mouse_dx =  xrel as f32 * RELATIVE_MOUSE_PIXELS_TO_AXIS_FACTOR;
