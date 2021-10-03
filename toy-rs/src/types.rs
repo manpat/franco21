@@ -107,6 +107,11 @@ impl Project {
 			.map(|entity| EntityRef::from(self, entity))
 	}
 
+	pub fn scenes(&self) -> impl Iterator<Item=SceneRef<'_>> {
+		self.scenes.iter()
+			.map(move |entity| SceneRef::from(self, entity))
+	}
+
 	pub fn entities(&self) -> impl Iterator<Item=EntityRef<'_>> {
 		self.entities.iter()
 			.map(move |entity| EntityRef::from(self, entity))
