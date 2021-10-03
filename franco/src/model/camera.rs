@@ -6,6 +6,8 @@ pub struct Camera {
 	pub position: Vec3,
 	pub pitch: f32,
 	pub yaw: f32,
+
+	pub orbit_zoom: f32,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -21,6 +23,8 @@ impl Camera {
 			position: Vec3::zero(),
 			pitch: -PI/5.0,
 			yaw: 0.0,
+
+			orbit_zoom: 20.0,
 		}
 	}
 }

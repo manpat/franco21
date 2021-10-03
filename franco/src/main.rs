@@ -43,7 +43,7 @@ fn main() -> Result<()> {
 		}
 
 		debug_ctl.update(&mut engine, &mut model);
-		global_ctl.update(&mut engine, &mut model.global);
+		global_ctl.update(&mut engine, &mut model);
 		camera_ctl.update(&mut engine, &mut model);
 		player_ctl.update(&mut model);
 		friend_ctl.update(&mut model);

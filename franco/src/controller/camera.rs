@@ -7,8 +7,6 @@ const DEBUG_CAMERA_PITCH_LIMIT: (f32, f32) = (-PI/2.0, PI/2.0);
 
 toybox::declare_input_context! {
 	struct OrbitCameraActions "Orbit Camera Control" {
-		trigger zoom_out { "Zoom Out" [Scancode::Minus] }
-		trigger zoom_in { "Zoom In" [Scancode::Equals] }
 	}
 }
 
@@ -35,7 +33,6 @@ pub struct CameraController {
 	orbit_actions: OrbitCameraActions,
 	active_orbit_actions: ActiveOrbitCameraActions,
 	debug_actions: DebugCameraActions,
-	zoom: f32,
 
 	prev_mode: ControlMode,
 }
@@ -47,7 +44,6 @@ impl CameraController {
 			orbit_actions: OrbitCameraActions::new_active(&mut engine.input),
 			active_orbit_actions: ActiveOrbitCameraActions::new(&mut engine.input),
 			debug_actions: DebugCameraActions::new(&mut engine.input),
-			zoom: 30.0,
 
 			prev_mode: ControlMode::OrbitPlayer,
 		}
@@ -90,15 +86,8 @@ impl CameraController {
 			camera.pitch = (camera.pitch + mouse.y as f32 * 0.5).clamp(pitch_min, pitch_max);
 		}
 
-		if input_state.active(self.orbit_actions.zoom_out) {
-			self.zoom *= 1.2;
-		} else if input_state.active(self.orbit_actions.zoom_in) {
-			self.zoom /= 1.2;
-		}
-
 		let camera_orientation = Quat::from_yaw(camera.yaw) * Quat::from_pitch(camera.pitch);
-
-		camera.position = Vec3::from_y(1.0) - camera_orientation.forward() * self.zoom;
+		camera.position = Vec3::from_y(1.0) - camera_orientation.forward() * camera.orbit_zoom;
 	}
 
 

@@ -7,6 +7,7 @@ toybox::declare_input_context! {
 		trigger toggle_flycam { "Toggle Fly Cam" [Scancode::V] }
 		trigger toggle_wireframe { "Toggle Wireframe" [Scancode::Z] }
 
+		trigger win_game { "Win" [Scancode::F10] }
 		trigger dump_model { "Dump Model" [Scancode::F12] }
 	}
 }
@@ -56,6 +57,12 @@ impl DebugController {
 				ControlMode::OrbitPlayer => ControlMode::FreeFly,
 				ControlMode::FreeFly => ControlMode::OrbitPlayer,
 			};
+		}
+
+		if input_state.active(self.actions.win_game) {
+			for friend in model.world.friends.iter_mut() {
+				friend.met_player = true;
+			}
 		}
 
 		if input_state.active(self.actions.dump_model) {

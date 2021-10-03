@@ -41,7 +41,9 @@ impl PlayerController {
 
 		if tp_dist.length() > 0.0 {
 			for friend in model.world.friends.iter_mut() {
-				friend.map_position += tp_dist;
+				if friend.met_player {
+					friend.map_position += tp_dist;
+				}
 			}
 		}
 	}

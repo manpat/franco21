@@ -9,10 +9,17 @@ pub struct UiView {
 	mesh: gfx::Mesh<gfx::ColorVertex>,
 	mesh_data: gfx::MeshData<gfx::ColorVertex>,
 
+	zoom_in_icon: BasicMesh,
+	zoom_out_icon: BasicMesh,
+
 	map_icon: BasicMesh,
 	sail_icon: BasicMesh,
 	anchor_icon: BasicMesh,
 	steering_wheel: BasicMesh,
+
+	text_find_friends: BasicMesh,
+	text_got_friend: BasicMesh,
+	text_got_all_friends: BasicMesh,
 
 	wiggle_phase: f32,
 
@@ -23,10 +30,17 @@ impl UiView {
 	pub fn new(gfx: &mut gfx::Context, resources: &model::Resources) -> Result<UiView> {
 		let ui_scene = resources.main_project.find_scene("ui").unwrap();
 
+		let zoom_in_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_zoom_in").unwrap());
+		let zoom_out_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_zoom_out").unwrap());
+
 		let map_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_map").unwrap());
 		let sail_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_sail").unwrap());
 		let anchor_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_anchor").unwrap());
 		let steering_wheel = BasicMesh::from_entity(ui_scene.find_entity("SteeringWheel").unwrap());
+
+		let text_find_friends = BasicMesh::from_entity(ui_scene.find_entity("TEXT_find_friends").unwrap());
+		let text_got_friend = BasicMesh::from_entity(ui_scene.find_entity("TEXT_got_friend").unwrap());
+		let text_got_all_friends = BasicMesh::from_entity(ui_scene.find_entity("TEXT_got_all_friends").unwrap());
 
 		let shader = gfx.new_simple_shader(shaders::COLOR_3D_VERT, shaders::FLAT_COLOR_FRAG)?;
 
@@ -37,10 +51,17 @@ impl UiView {
 			mesh: gfx::Mesh::new(gfx),
 			mesh_data: gfx::MeshData::new(),
 
+			zoom_in_icon,
+			zoom_out_icon,
+
 			map_icon,
 			sail_icon,
 			anchor_icon,
 			steering_wheel,
+
+			text_find_friends,
+			text_got_friend,
+			text_got_all_friends,
 
 			wiggle_phase: 0.0,
 
@@ -49,12 +70,16 @@ impl UiView {
 	}
 
 	pub fn update(&mut self, model: &model::Model) {
+		use model::GameState;
+
 		self.mesh_data.clear();
 
 		let buttons = [
 			(&model.ui.map_button, &self.map_icon),
 			(&model.ui.sail_button, &self.sail_icon),
 			(&model.ui.anchor_button, &self.anchor_icon),
+			(&model.ui.zoom_in_button, &self.zoom_in_icon),
+			(&model.ui.zoom_out_button, &self.zoom_out_icon),
 		];
 
 		for (button, icon) in buttons {
@@ -64,6 +89,24 @@ impl UiView {
 			let transform = Mat3x4::rotate_z_translate(wiggle, pos.extend(0.0))
 				* Mat3x4::uniform_scale(1.0 + phase*0.2);
 			icon.build_into(&mut self.mesh_data, transform);
+		}
+
+		let text_wiggle = (self.wiggle_phase * TAU).sin() * PI/16.0;
+		let text_pos = model::UiPosition::Center(Vec2::zero()).resolve(model.ui.aspect);
+		let transform = Mat3x4::rotate_z_translate(text_wiggle, text_pos.extend(1.0));
+
+		match model.global.game_state {
+			GameState::Starting(_) => {
+				self.text_find_friends.build_into(&mut self.mesh_data, transform);
+			}
+			GameState::GotFriend(_) => {
+				self.text_got_friend.build_into(&mut self.mesh_data, transform);
+			}
+			GameState::Ending(_) => {
+				self.text_got_all_friends.build_into(&mut self.mesh_data, transform);
+			}
+
+			_ => {}
 		}
 
 		let pos = model.ui.wheel.position().resolve(model.ui.aspect);
@@ -105,6 +148,7 @@ struct MapView {
 	island_uimesh: BasicMesh,
 	rocks_uimesh: BasicMesh,
 	player_uimesh: BasicMesh,
+	friend_uimesh: BasicMesh,
 }
 
 impl MapView {
@@ -117,6 +161,7 @@ impl MapView {
 		let island_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_island").unwrap());
 		let rocks_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_rocks").unwrap());
 		let player_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_player").unwrap());
+		let friend_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_friend").unwrap());
 
 		Ok(MapView {
 			shader,
@@ -129,6 +174,7 @@ impl MapView {
 			island_uimesh,
 			rocks_uimesh,
 			player_uimesh,
+			friend_uimesh,
 		})
 	}
 
@@ -159,6 +205,16 @@ impl MapView {
 			};
 
 			uimesh.build_into(&mut self.mesh_data, island_transform);
+		}
+
+		for friend in model.world.friends.iter() {
+			if friend.met_player {
+				continue
+			}
+
+			let pos = (friend.map_position * map_to_ui_factor).extend(0.35);
+			let island_transform = base_transform * Mat3x4::translate(pos);
+			self.friend_uimesh.build_into(&mut self.mesh_data, island_transform);
 		}
 
 		let pos = (model.player.map_position * map_to_ui_factor).extend(0.4);

@@ -1,8 +1,10 @@
 use crate::prelude::*;
 
 pub const TRICK_TIME: f32 = 1.4;
-pub const FISH_PLAYER_DIST_THRESHOLD: f32 = 0.5;
-pub const BOAT_PLAYER_DIST_THRESHOLD: f32 = 1.0;
+pub const FISH_PLAYER_DIST_THRESHOLD: f32 = 1.0;
+pub const BOAT_PLAYER_DIST_THRESHOLD: f32 = 2.0;
+
+pub const PLAYER_MEET_THRESHOLD: f32 = 4.0;
 
 pub struct FriendController {
 }
@@ -25,9 +27,20 @@ impl FriendController {
 				false => BOAT_PLAYER_DIST_THRESHOLD,
 			};
 
-			let player_diff = model.player.map_position - friend.map_position;
+			let player_dir = Vec2::from_angle(model.player.heading);
+			let target_position = model.player.map_position
+				+ player_dir * model.player.speed
+				+ player_dir.perp() * friend_direction * model.player.speed.min(1.0);
+
+			let player_diff = target_position - friend.map_position;
 			let player_dist = (player_diff.length() - dist_threshold).max(0.0);
 			let heading_towards_player = player_diff.to_angle();
+
+			if !friend.met_player && player_dist < PLAYER_MEET_THRESHOLD {
+				friend.met_player = true;
+				friend.state = FriendState::DoingTricks(0.0);
+				model.global.game_state.notify_got_friend();
+			}
 
 			friend.map_position += Vec2::from_angle(friend.heading) * friend.speed / 60.0;
 			friend.bob_phase += (1.0 + friend.speed / 2.0) * PI / 60.0;
@@ -50,7 +63,7 @@ impl FriendController {
 							friend.state = FriendState::DoingTricks(0.0);
 						}
 
-						friend.decision_timer = 3.0;
+						friend.decision_timer = 1.0 + rand::random::<f32>() * 1.0;
 					}
 				}
 
@@ -72,14 +85,14 @@ impl FriendController {
 						friend.speed += (player_dist.min(4.0) - friend.speed) / 60.0;
 
 						if decision_time {
-							if rand::random::<f32>() < 0.3 {
+							if rand::random::<f32>() < 0.4 {
 								friend.state = FriendState::DoingTricks(0.0);
 							}
 						}
 
 					} else if decision_time {
 						friend.state = FriendState::HangingOut;
-						friend.decision_timer = 3.0;
+						friend.decision_timer = 2.0 + rand::random::<f32>() * 2.0;
 					}
 				}
 
@@ -88,7 +101,7 @@ impl FriendController {
 					if new_phase < 1.0 {
 						friend.state = FriendState::DoingTricks(new_phase);
 					} else {
-						friend.decision_timer = 3.0;
+						friend.decision_timer = 2.0 + rand::random::<f32>() * 2.0;
 						friend.state = match friend.met_player && player_dist > 0.0 {
 							false => FriendState::HangingOut,
 							true => FriendState::Following,

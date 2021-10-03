@@ -14,6 +14,9 @@ toybox::declare_input_context! {
 
 		trigger increase_speed { "Faster" [Scancode::W] }
 		trigger decrease_speed { "Slower" [Scancode::S] }
+
+		trigger zoom_out { "Zoom Out" [Scancode::Minus] }
+		trigger zoom_in { "Zoom In" [Scancode::Equals] }
 	}
 }
 
@@ -67,6 +70,10 @@ impl UiController {
 			self.on_sail_click(model);
 		} else if input.active(self.actions.decrease_speed) {
 			self.on_anchor_click(model);
+		} else if input.active(self.actions.zoom_out) {
+			self.on_zoom_out_click(model);
+		} else if input.active(self.actions.zoom_in) {
+			self.on_zoom_in_click(model);
 		}
 
 		if let Some(mouse_pos) = input.mouse(self.actions.mouse) {
@@ -79,6 +86,8 @@ impl UiController {
 			}
 		}
 
+		model.ui.zoom_in_button.state.update();
+		model.ui.zoom_out_button.state.update();
 		model.ui.map_button.state.update();
 		model.ui.sail_button.state.update();
 		model.ui.anchor_button.state.update();
@@ -94,6 +103,9 @@ impl UiController {
 			(model.ui.map_button.position, UiController::on_map_click as Callback),
 			(model.ui.sail_button.position, UiController::on_sail_click as Callback),
 			(model.ui.anchor_button.position, UiController::on_anchor_click as Callback),
+
+			(model.ui.zoom_in_button.position, UiController::on_zoom_in_click as Callback),
+			(model.ui.zoom_out_button.position, UiController::on_zoom_out_click as Callback),
 		];
 
 		for (button_position, action) in buttons {
@@ -142,6 +154,8 @@ impl UiController {
 			&mut model.ui.map_button,
 			&mut model.ui.sail_button,
 			&mut model.ui.anchor_button,
+			&mut model.ui.zoom_in_button,
+			&mut model.ui.zoom_out_button,
 		];
 
 		for button in buttons {
@@ -181,5 +195,15 @@ impl UiController {
 			SailState::Sailing{speed: model::MAX_SAIL_SPEED} => return,
 			SailState::Sailing{speed} => SailState::Sailing{speed: speed+1},
 		}
+	}
+
+	pub fn on_zoom_in_click(&mut self, model: &mut model::Model) {
+		model.camera.orbit_zoom /= 1.2;
+		model.camera.orbit_zoom = model.camera.orbit_zoom.max(2.0);
+	}
+
+	pub fn on_zoom_out_click(&mut self, model: &mut model::Model) {
+		model.camera.orbit_zoom *= 1.2;
+		model.camera.orbit_zoom = model.camera.orbit_zoom.min(100.0);
 	}
 }

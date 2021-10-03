@@ -14,6 +14,8 @@ pub struct Ui {
 	pub aspect: f32,
 	pub map_button: Button,
 	pub sail_button: Button,
+	pub zoom_in_button: Button,
+	pub zoom_out_button: Button,
 	pub anchor_button: Button,
 	pub wheel: Wheel,
 	pub map: Map,
@@ -37,6 +39,16 @@ impl Ui {
 
 			anchor_button: Button {
 				position: UiPosition::BottomRight(Vec2::new(2.0, 1.5)),
+				state: UiPanelState::Closed,
+			},
+
+			zoom_in_button: Button {
+				position: UiPosition::TopRight(Vec2::new(3.0, 1.5)),
+				state: UiPanelState::Closed,
+			},
+
+			zoom_out_button: Button {
+				position: UiPosition::TopRight(Vec2::new(1.5, 1.5)),
 				state: UiPanelState::Closed,
 			},
 
@@ -184,3 +196,5 @@ impl UiPanelState {
 		matches!(self, UiPanelState::Closed | UiPanelState::Closing{..})
 	}
 }
+
+

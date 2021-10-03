@@ -7,6 +7,7 @@ pub enum FriendName {
 	Fish,
 
 	BoatBoy,
+	BoatBoy2,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -43,6 +44,7 @@ impl FriendName {
 			"dolphin" => FriendName::Dolphin,
 			"fish" => FriendName::Fish,
 			"boat_boy" => FriendName::BoatBoy,
+			"boat_boy2" => FriendName::BoatBoy2,
 			_ => panic!("Unknown friend name {}", name),
 		}
 	}
