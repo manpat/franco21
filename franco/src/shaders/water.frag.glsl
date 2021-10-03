@@ -13,6 +13,6 @@ void main() {
 	const vec3 water_color = water_color_at_height(v_height);
 	const vec3 final_color = apply_fog(water_color, dist);
 
-	out_color = vec4(final_color, 1.0);
+	out_color = vec4(final_color, 0.0);
 }
 

@@ -36,6 +36,23 @@ fn main() -> Result<()> {
 	let mut friend_view = view::FriendView::new(&mut engine.gfx, &model.resources)?;
 	let mut ui_view = view::UiView::new(&mut engine.gfx, &model.resources)?;
 
+	let main_fbo = engine.gfx.new_framebuffer(
+		gfx::FramebufferSettings::new(gfx::TextureSize::Backbuffer)
+			.add_depth()
+			.add_color(0, gfx::TextureFormat::color())
+	);
+
+	let friend_fbo = engine.gfx.new_framebuffer(
+		gfx::FramebufferSettings::new(gfx::TextureSize::Backbuffer)
+			.add_depth()
+			.add_color(0, gfx::TextureFormat::color())
+	);
+
+	let composite_shader = engine.gfx.new_simple_shader(
+		include_str!("shaders/fullscreen_quad.vert.glsl"),
+		include_str!("shaders/final_composite.frag.glsl")
+	)?;
+
 	'main: loop {
 		engine.process_events();
 		if engine.should_quit() || model.global.wants_hard_quit {
@@ -68,16 +85,50 @@ fn main() -> Result<()> {
 
 		let mut view_ctx = view::ViewContext::new(engine.gfx.render_state());
 
-		view_ctx.gfx.set_clear_color(model.world.sky_color);
-		view_ctx.gfx.clear(gfx::ClearMode::ALL);
-
 		view_ctx.gfx.bind_uniform_buffer(0, main_camera_ubo);
 		view_ctx.gfx.bind_uniform_buffer(1, main_world_ubo);
+
+		view_ctx.gfx.set_wireframe(model.global.wireframe_enabled);
+
+		view_ctx.gfx.bind_framebuffer(main_fbo);
+		view_ctx.gfx.set_clear_color(Color{a: 0.0, ..model.world.sky_color});
+		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 
 		boat_view.draw(&mut view_ctx);
 		island_view.draw(&mut view_ctx);
 		water_view.draw(&mut view_ctx);
+
+		// Draw friends into separate fbo so we can draw them underwater
+		view_ctx.gfx.bind_framebuffer(friend_fbo);
+		view_ctx.gfx.set_clear_color(Color::grey_a(0.0, 0.0));
+		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 		friend_view.draw(&mut view_ctx);
+
+		view_ctx.gfx.bind_framebuffer(None);
+
+		// Composite and draw world
+		{
+			view_ctx.gfx.set_wireframe(false);
+
+			view_ctx.gfx.set_clear_color(model.world.sky_color);
+			view_ctx.gfx.clear(gfx::ClearMode::ALL);
+
+			let resources = view_ctx.resources;
+
+			let color_0 = resources.get(main_fbo).color_attachment(0).unwrap();
+			let depth_0 = resources.get(main_fbo).depth_stencil_attachment().unwrap();
+			let color_1 = resources.get(friend_fbo).color_attachment(0).unwrap();
+			let depth_1 = resources.get(friend_fbo).depth_stencil_attachment().unwrap();
+
+			view_ctx.gfx.bind_texture(0, color_0);
+			view_ctx.gfx.bind_texture(1, color_1);
+			view_ctx.gfx.bind_texture(2, depth_0);
+			view_ctx.gfx.bind_texture(3, depth_1);
+			view_ctx.gfx.bind_shader(composite_shader);
+			view_ctx.gfx.draw_arrays(gfx::DrawMode::Triangles, 6);
+		}
+
+		view_ctx.gfx.set_wireframe(model.global.wireframe_enabled);
 
 		debug::draw(&mut view_ctx.gfx);
 
@@ -133,6 +184,7 @@ fn build_ui_camera_uniforms(aspect: f32) -> CameraUniforms {
 #[derive(Copy, Clone, Debug)]
 struct WorldUniforms {
 	sky_color: Color,
+	water_obscure_color: Color,
 	player_position: Vec2,
 	fog_start: f32,
 	fog_distance: f32,
@@ -143,6 +195,7 @@ struct WorldUniforms {
 fn build_world_uniforms(model: &model::Model) -> WorldUniforms {
 	WorldUniforms {
 		sky_color: model.world.sky_color,
+		water_obscure_color: Color::hsv(220.0, 0.6, 0.7),
 		player_position: model.player.map_position,
 
 		fog_start: 80.0,

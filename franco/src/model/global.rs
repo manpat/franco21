@@ -3,6 +3,7 @@
 #[derive(Debug)]
 pub struct Global {
 	pub wants_hard_quit: bool,
+	pub wireframe_enabled: bool,
 
 	pub game_state: GameState,
 }
@@ -11,6 +12,7 @@ impl Global {
 	pub fn new() -> Global {
 		Global {
 			wants_hard_quit: false,
+			wireframe_enabled: false,
 			game_state: GameState::PreGame(1.0),
 		}
 	}

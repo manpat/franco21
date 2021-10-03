@@ -73,8 +73,7 @@ impl DebugController {
 		}
 
 		if input_state.active(self.actions.toggle_wireframe) {
-			self.wireframe_enabled = !self.wireframe_enabled;
-			engine.gfx.render_state().set_wireframe(self.wireframe_enabled);
+			model.global.wireframe_enabled = !model.global.wireframe_enabled;
 		}
 	}
 }
