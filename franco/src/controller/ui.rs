@@ -1,6 +1,8 @@
 use crate::prelude::*;
 
 
+const BUTTON_INTERACT_DIST: f32 = 1.2;
+
 
 toybox::declare_input_context! {
 	struct UiActions "Ui" {
@@ -9,6 +11,9 @@ toybox::declare_input_context! {
 
 		state wheel_left { "Wheel Left" [Scancode::A] }
 		state wheel_right { "Wheel Right" [Scancode::D] }
+
+		trigger increase_speed { "Faster" [Scancode::W] }
+		trigger decrease_speed { "Slower" [Scancode::S] }
 	}
 }
 
@@ -47,9 +52,9 @@ impl UiController {
 				self.process_drag_wheel(model, mouse_delta);
 			}
 		} else if input.active(self.actions.wheel_left) {
-			model.ui.wheel.angle += (PI - model.ui.wheel.angle) / 10.0;
+			model.ui.wheel.angle += (PI - model.ui.wheel.angle) / 20.0;
 		} else if input.active(self.actions.wheel_right) {
-			model.ui.wheel.angle += (-PI - model.ui.wheel.angle) / 10.0;
+			model.ui.wheel.angle += (-PI - model.ui.wheel.angle) / 20.0;
 		} else {
 			// Slowly shift wheel back to zero
 			let angle = &mut model.ui.wheel.angle;
@@ -57,6 +62,13 @@ impl UiController {
 		}
 
 		let input = engine.input.frame_state();
+		
+		if input.active(self.actions.increase_speed) {
+			self.on_sail_click(model);
+		} else if input.active(self.actions.decrease_speed) {
+			self.on_anchor_click(model);
+		}
+
 		if let Some(mouse_pos) = input.mouse(self.actions.mouse) {
 			let mouse_pos = mouse_pos * model::UI_SAFE_REGION;
 			
@@ -68,24 +80,29 @@ impl UiController {
 		}
 
 		model.ui.map_button.state.update();
+		model.ui.sail_button.state.update();
+		model.ui.anchor_button.state.update();
 
 		model.ui.map.state.update();
 		model.ui.wheel.state.update();
 	}
 
 	pub fn process_mouse_down(&mut self, engine: &mut toybox::Engine, model: &mut model::Model, mouse_pos: Vec2) {
-		let map_button_pos = model.ui.map_button.position;
+		type Callback = fn(&mut UiController, &mut model::Model);
 
-		if map_button_pos.distance_to(mouse_pos, model.ui.aspect) < 2.0 {
-			let map_state = &mut model.ui.map.state;
-			if map_state.is_open() {
-				map_state.close(0.3);
-			} else {
-				map_state.open(0.4);
+		let buttons = [
+			(model.ui.map_button.position, UiController::on_map_click as Callback),
+			(model.ui.sail_button.position, UiController::on_sail_click as Callback),
+			(model.ui.anchor_button.position, UiController::on_anchor_click as Callback),
+		];
+
+		for (button_position, action) in buttons {
+			if button_position.distance_to(mouse_pos, model.ui.aspect) < BUTTON_INTERACT_DIST {
+				action(self, model);
+				return;
 			}
-
-			return;
 		}
+
 
 		let wheel_pos = model.ui.wheel.position();
 		if wheel_pos.distance_to(mouse_pos, model.ui.aspect) < 4.0 {
@@ -121,13 +138,48 @@ impl UiController {
 			wheel_state.close(1.0);
 		}
 
-		let map_button_pos = model.ui.map_button.position;
-		let map_button_state = &mut model.ui.map_button.state;
+		let buttons = [
+			&mut model.ui.map_button,
+			&mut model.ui.sail_button,
+			&mut model.ui.anchor_button,
+		];
 
-		if map_button_pos.distance_to(mouse_pos, model.ui.aspect) < 2.0 {
-			map_button_state.open(0.1);
+		for button in buttons {
+			if button.position.distance_to(mouse_pos, model.ui.aspect) < BUTTON_INTERACT_DIST {
+				button.state.open(0.1);
+			} else {
+				button.state.close(0.1);
+			}
+		}
+	}
+
+
+	pub fn on_map_click(&mut self, model: &mut model::Model) {
+		let map_state = &mut model.ui.map.state;
+		if map_state.is_open() {
+			map_state.close(0.3);
 		} else {
-			map_button_state.close(0.1);
+			map_state.open(0.4);
+		}
+	}
+
+	pub fn on_anchor_click(&mut self, model: &mut model::Model) {
+		use model::SailState;
+
+		model.player.sail_state = match model.player.sail_state {
+			SailState::Anchored => return,
+			SailState::Sailing{speed: 1} => SailState::Anchored,
+			SailState::Sailing{speed} => SailState::Sailing{speed: speed-1},
+		}
+	}
+
+	pub fn on_sail_click(&mut self, model: &mut model::Model) {
+		use model::SailState;
+
+		model.player.sail_state = match model.player.sail_state {
+			SailState::Anchored => SailState::Sailing{speed: 1},
+			SailState::Sailing{speed: model::MAX_SAIL_SPEED} => return,
+			SailState::Sailing{speed} => SailState::Sailing{speed: speed+1},
 		}
 	}
 }

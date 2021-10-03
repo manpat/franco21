@@ -1,48 +1,24 @@
 use crate::prelude::*;
-
-
-toybox::declare_input_context! {
-	struct PlayerActions "Player Control" {
-		state forward { "Forward" [Scancode::W] }
-		state back { "Back" [Scancode::S] }
-		// mouse mouse { "Mouse" [1.0] }
-	}
-}
+use model::SailState;
 
 pub struct PlayerController {
-	actions: PlayerActions,
 }
 
 impl PlayerController {
-	pub fn new(engine: &mut toybox::Engine) -> PlayerController {
-		PlayerController {
-			actions: PlayerActions::new_active(&mut engine.input),
-		}
+	pub fn new(_engine: &mut toybox::Engine) -> PlayerController {
+		PlayerController {}
 	}
 
-	pub fn update(&mut self, engine: &mut toybox::Engine, model: &mut model::Model) {
-		let input = engine.input.frame_state();
-
-		if input.active(self.actions.forward) {
-			model.player.speed += 0.01/60.0;
-		}
-
-		if input.active(self.actions.back) {
-			model.player.speed -= 0.01/60.0;
-		}
-
-		model.player.speed = model.player.speed.clamp(0.0, 3.0);
+	pub fn update(&mut self, model: &mut model::Model) {
 
 		let heading_factor = (1.0 - model.player.speed*10.0).clamp(0.1, 1.0);
-		let turn_rate = 0.5*PI/60.0 * heading_factor;
 
-		// if input.active(self.actions.left) {
-		// 	model.player.heading += turn_rate;
-		// }
+		let (target_speed, acceleration) = match model.player.sail_state {
+			SailState::Anchored => (0.0, 2.0),
+			SailState::Sailing{speed} => (speed as f32 * 0.01, 0.5),
+		};
 
-		// if input.active(self.actions.right) {
-		// 	model.player.heading -= turn_rate;
-		// }
+		model.player.speed += (target_speed - model.player.speed).min(0.005) * acceleration / 60.0;
 
 		model.player.heading += model.ui.wheel.angle/3.0 * heading_factor / 60.0;
 
@@ -50,10 +26,10 @@ impl PlayerController {
 		model.player.map_position += map_velocity;
 
 
-		let map_size = model.world.map.size;
+		// Wrap player position to within the map with a margin
+		let map_size = model.world.map.size + Vec2::splat(50.0);
 		let player_pos = &mut model.player.map_position;
 
-		// Wrap player position to within the map
 		player_pos.x = (player_pos.x + map_size.x/2.0).rem_euclid(map_size.x) - map_size.x/2.0;
 		player_pos.y = (player_pos.y + map_size.y/2.0).rem_euclid(map_size.y) - map_size.y/2.0;
 	}

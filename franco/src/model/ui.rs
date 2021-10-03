@@ -13,6 +13,8 @@ pub const UI_SAFE_REGION: f32 = 10.0;
 pub struct Ui {
 	pub aspect: f32,
 	pub map_button: Button,
+	pub sail_button: Button,
+	pub anchor_button: Button,
 	pub wheel: Wheel,
 	pub map: Map,
 
@@ -25,6 +27,16 @@ impl Ui {
 			aspect: 1.0,
 			map_button: Button {
 				position: UiPosition::TopLeft(Vec2::splat(2.0)),
+				state: UiPanelState::Closed,
+			},
+
+			sail_button: Button {
+				position: UiPosition::BottomRight(Vec2::new(2.0, 4.0)),
+				state: UiPanelState::Closed,
+			},
+
+			anchor_button: Button {
+				position: UiPosition::BottomRight(Vec2::new(2.0, 1.5)),
 				state: UiPanelState::Closed,
 			},
 

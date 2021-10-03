@@ -43,40 +43,13 @@ fn main() -> Result<()> {
 		debug_ctl.update(&mut engine, &mut model);
 		global_ctl.update(&mut engine, &mut model.global);
 		camera_ctl.update(&mut engine, &mut model);
-		player_ctl.update(&mut engine, &mut model);
+		player_ctl.update(&mut model);
 		ui_ctl.update(&mut engine, &mut model);
 
 		boat_view.update(&model);
 		water_view.update(&model);
 		island_view.update(&model);
 		ui_view.update(&model);
-
-
-		{
-			let mut mb = debug::mesh_builder();
-
-			let player_pos_map = model.player.map_position;
-
-			// mb.set_color(Color::rgb(1.0, 1.0, 0.5));
-
-			// let txform = Mat3x4::scale_translate(
-			// 	Vec3{y: 0.1, .. model.world.map.size.to_x0z() * model::MAP_SCALE},
-			// 	model::map_to_world(-player_pos_map).to_x0z()
-			// );
-
-			// mb.build(gfx::geom::Cuboid::from_matrix(txform));
-
-
-			mb.set_color(Color::rgb(1.0, 0.0, 0.0));
-			for object in model.world.map.objects.iter() {
-				let txform = Mat3x4::scale_translate(
-					Vec3::splat(4.0),
-					model::map_to_world(object.map_position - player_pos_map).to_x0z() + Vec3::from_y(8.0)
-				);
-
-				mb.build(gfx::geom::Cuboid::from_matrix(txform));
-			}
-		}
  
 
 		let camera_uniforms = build_camera_uniforms(&model.camera, engine.gfx.aspect());
@@ -91,7 +64,7 @@ fn main() -> Result<()> {
 
 		let mut view_ctx = view::ViewContext::new(engine.gfx.render_state());
 
-		view_ctx.gfx.set_clear_color(Color::hsv(200.0, 0.5, 0.9));
+		view_ctx.gfx.set_clear_color(model.world.sky_color);
 		view_ctx.gfx.clear(gfx::ClearMode::ALL);
 
 		view_ctx.gfx.bind_uniform_buffer(0, main_camera_ubo);
@@ -154,13 +127,20 @@ fn build_ui_camera_uniforms(aspect: f32) -> CameraUniforms {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 struct WorldUniforms {
+	sky_color: Color,
 	player_position: Vec2,
+	fog_start: f32,
+	fog_distance: f32,
 	// _pad: [f32; 2],
 	// NOTE: align to Vec4s
 }
 
 fn build_world_uniforms(model: &model::Model) -> WorldUniforms {
 	WorldUniforms {
+		sky_color: model.world.sky_color,
 		player_position: model.player.map_position,
+
+		fog_start: 80.0,
+		fog_distance: 200.0,
 	}
 }

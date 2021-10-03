@@ -6,6 +6,7 @@ layout(location=0) in vec3 a_pos;
 layout(location=1) in vec4 a_color;
 
 out float v_height;
+out vec2 v_world_pos;
 
 void main() {
 	RippleInstance instance = s_instances[gl_InstanceID];
@@ -19,5 +20,6 @@ void main() {
 	gl_Position = u_camera.projection_view * vec4(a_pos + vec3(instance.offset, ripple).xzy, 1.0);
 
 	v_height = a_pos.y + ripple;
+	v_world_pos = a_pos.xz + instance.offset;
 }
 

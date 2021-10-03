@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use model::UiPosition;
+use model::{UiPosition, MapObjectType};
 
 
 
@@ -10,6 +10,8 @@ pub struct UiView {
 	mesh_data: gfx::MeshData<gfx::ColorVertex>,
 
 	map_icon: UiMesh,
+	sail_icon: UiMesh,
+	anchor_icon: UiMesh,
 	steering_wheel: UiMesh,
 
 	wiggle_phase: f32,
@@ -22,6 +24,8 @@ impl UiView {
 		let ui_scene = resources.main_project.find_scene("ui").unwrap();
 
 		let map_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_map").unwrap());
+		let sail_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_sail").unwrap());
+		let anchor_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_anchor").unwrap());
 		let steering_wheel = UiMesh::from_entity(ui_scene.find_entity("SteeringWheel").unwrap());
 
 		let shader = gfx.new_simple_shader(shaders::COLOR_3D_VERT, shaders::FLAT_COLOR_FRAG)?;
@@ -34,6 +38,8 @@ impl UiView {
 			mesh_data: gfx::MeshData::new(),
 
 			map_icon,
+			sail_icon,
+			anchor_icon,
 			steering_wheel,
 
 			wiggle_phase: 0.0,
@@ -46,13 +52,17 @@ impl UiView {
 		self.mesh_data.clear();
 
 		let buttons = [
-			(&model.ui.map_button, &self.map_icon)
+			(&model.ui.map_button, &self.map_icon),
+			(&model.ui.sail_button, &self.sail_icon),
+			(&model.ui.anchor_button, &self.anchor_icon),
 		];
 
 		for (button, icon) in buttons {
 			let pos = button.position.resolve(model.ui.aspect);
-			let wiggle = (self.wiggle_phase * TAU).sin() * button.state.as_phase() * PI/16.0;
-			let transform = Mat3x4::rotate_z_translate(wiggle, pos.extend(0.0));
+			let phase = button.state.as_phase();
+			let wiggle = (self.wiggle_phase * TAU).sin() * phase * PI/16.0;
+			let transform = Mat3x4::rotate_z_translate(wiggle, pos.extend(0.0))
+				* Mat3x4::uniform_scale(1.0 + phase*0.2);
 			icon.build_into(&mut self.mesh_data, transform);
 		}
 
@@ -125,6 +135,7 @@ struct MapView {
 
 	bg_uimesh: UiMesh,
 	island_uimesh: UiMesh,
+	rocks_uimesh: UiMesh,
 	player_uimesh: UiMesh,
 }
 
@@ -136,6 +147,7 @@ impl MapView {
 
 		let bg_uimesh = UiMesh::from_entity(ui_scene.find_entity("MapBg").unwrap());
 		let island_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_island").unwrap());
+		let rocks_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_rocks").unwrap());
 		let player_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_player").unwrap());
 
 		Ok(MapView {
@@ -147,6 +159,7 @@ impl MapView {
 
 			bg_uimesh,
 			island_uimesh,
+			rocks_uimesh,
 			player_uimesh,
 		})
 	}
@@ -171,7 +184,12 @@ impl MapView {
 			let pos = (object.map_position * map_to_ui_factor).extend(0.3);
 			let island_transform = base_transform * Mat3x4::translate(pos);
 
-			self.island_uimesh.build_into(&mut self.mesh_data, island_transform);
+			let uimesh = match object.ty {
+				MapObjectType::SmallIsland => &self.island_uimesh,
+				_ => continue,
+			};
+
+			uimesh.build_into(&mut self.mesh_data, island_transform);
 		}
 
 		let pos = (model.player.map_position * map_to_ui_factor).extend(0.4);

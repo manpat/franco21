@@ -11,5 +11,6 @@ pub const COLOR_3D_INSTANCED_VERT: &str = include_str!("shaders/color_3d_instanc
 
 
 pub const FLAT_COLOR_FRAG: &str = include_str!("shaders/flat_color.frag.glsl");
+pub const FLAT_COLOR_FOG_FRAG: &str = include_str!("shaders/flat_color_fog.frag.glsl");
 pub const WATER_FRAG: &str = include_str!("shaders/water.frag.glsl");
 
