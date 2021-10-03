@@ -1,5 +1,8 @@
 use crate::prelude::*;
 
+pub mod basic_mesh;
+pub use basic_mesh::*;
+
 pub mod boat;
 pub use boat::*;
 
@@ -8,6 +11,9 @@ pub use water::*;
 
 pub mod island;
 pub use island::*;
+
+pub mod friends;
+pub use friends::*;
 
 pub mod ui;
 pub use ui::*;

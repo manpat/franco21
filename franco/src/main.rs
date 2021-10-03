@@ -25,6 +25,7 @@ fn main() -> Result<()> {
 	let mut global_ctl = controller::GlobalController::new(&mut engine);
 	let mut camera_ctl = controller::CameraController::new(&mut engine);
 	let mut player_ctl = controller::PlayerController::new(&mut engine);
+	let mut friend_ctl = controller::FriendController::new(&mut engine);
 	let mut ui_ctl = controller::UiController::new(&mut engine);
 
 	let mut model = model::Model::new()?;
@@ -32,6 +33,7 @@ fn main() -> Result<()> {
 	let mut boat_view = view::BoatView::new(&mut engine.gfx, &model.resources)?;
 	let mut water_view = view::WaterView::new(&mut engine.gfx, &model.resources)?;
 	let mut island_view = view::IslandView::new(&mut engine.gfx, &model.resources)?;
+	let mut friend_view = view::FriendView::new(&mut engine.gfx, &model.resources)?;
 	let mut ui_view = view::UiView::new(&mut engine.gfx, &model.resources)?;
 
 	'main: loop {
@@ -44,11 +46,13 @@ fn main() -> Result<()> {
 		global_ctl.update(&mut engine, &mut model.global);
 		camera_ctl.update(&mut engine, &mut model);
 		player_ctl.update(&mut model);
+		friend_ctl.update(&mut model);
 		ui_ctl.update(&mut engine, &mut model);
 
 		boat_view.update(&model);
 		water_view.update(&model);
 		island_view.update(&model);
+		friend_view.update(&model);
 		ui_view.update(&model);
  
 
@@ -73,6 +77,7 @@ fn main() -> Result<()> {
 		boat_view.draw(&mut view_ctx);
 		island_view.draw(&mut view_ctx);
 		water_view.draw(&mut view_ctx);
+		friend_view.draw(&mut view_ctx);
 
 		debug::draw(&mut view_ctx.gfx);
 

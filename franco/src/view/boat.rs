@@ -41,7 +41,7 @@ impl BoatView {
 
 	pub fn update(&mut self, model: &model::Model) {
 		let speed = model.player.speed;
-		let factor = (speed*40.0).clamp(0.2, 1.0);
+		let factor = (speed).clamp(0.2, 1.0);
 
 		let uniforms = BoatUniforms {
 			transform: Mat4::translate(Vec3::from_y((0.7 + self.time.sin()) * factor * 0.3))
@@ -52,7 +52,7 @@ impl BoatView {
 
 		self.boat_ubo.upload(&[uniforms]);
 
-		self.time += speed.max(1.0 / 60.0);
+		self.time += speed.max(1.0) / 60.0;
 	}
 
 	pub fn draw(&self, ctx: &mut view::ViewContext) {

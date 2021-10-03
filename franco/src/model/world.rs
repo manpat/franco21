@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+pub mod friend;
+pub use friend::*;
 
 pub const MAP_SCALE: f32 = 10.0;
 
@@ -7,6 +9,7 @@ pub const MAP_SCALE: f32 = 10.0;
 #[derive(Debug)]
 pub struct World {
 	pub map: Map,
+	pub friends: Vec<Friend>,
 
 	pub sky_color: Color,
 }
@@ -15,9 +18,29 @@ impl World {
 	pub fn new(resources: &model::Resources) -> Result<World> {
 		let map_scene = resources.main_project.find_scene("map").unwrap();
 
+		let friends = map_scene.entities_with_prefix("FRIEND_")
+			.map(|entity| {
+				Friend {
+					name: FriendName::from_name(&entity.name),
+					state: FriendState::HangingOut,
+					met_player: false,
+
+					map_position: entity.position.to_xz() * Vec2::new(1.0, -1.0),
+					heading: entity.rotation.yaw(),
+					speed: 0.0,
+
+					decision_timer: 0.0,
+					bob_phase: 0.0,
+					heading_wander: 0.0,
+				}
+			})
+			.collect();
+
 		Ok(World {
-			sky_color: Color::hsv(200.0, 0.5, 0.9),
 			map: Map::new(map_scene),
+			friends,
+
+			sky_color: Color::hsv(200.0, 0.5, 0.9),
 		})
 	}
 }

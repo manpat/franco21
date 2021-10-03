@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use model::{UiPosition, MapObjectType};
-
+use view::BasicMesh;
 
 
 pub struct UiView {
@@ -9,10 +9,10 @@ pub struct UiView {
 	mesh: gfx::Mesh<gfx::ColorVertex>,
 	mesh_data: gfx::MeshData<gfx::ColorVertex>,
 
-	map_icon: UiMesh,
-	sail_icon: UiMesh,
-	anchor_icon: UiMesh,
-	steering_wheel: UiMesh,
+	map_icon: BasicMesh,
+	sail_icon: BasicMesh,
+	anchor_icon: BasicMesh,
+	steering_wheel: BasicMesh,
 
 	wiggle_phase: f32,
 
@@ -23,10 +23,10 @@ impl UiView {
 	pub fn new(gfx: &mut gfx::Context, resources: &model::Resources) -> Result<UiView> {
 		let ui_scene = resources.main_project.find_scene("ui").unwrap();
 
-		let map_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_map").unwrap());
-		let sail_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_sail").unwrap());
-		let anchor_icon = UiMesh::from_entity(ui_scene.find_entity("ICON_anchor").unwrap());
-		let steering_wheel = UiMesh::from_entity(ui_scene.find_entity("SteeringWheel").unwrap());
+		let map_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_map").unwrap());
+		let sail_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_sail").unwrap());
+		let anchor_icon = BasicMesh::from_entity(ui_scene.find_entity("ICON_anchor").unwrap());
+		let steering_wheel = BasicMesh::from_entity(ui_scene.find_entity("SteeringWheel").unwrap());
 
 		let shader = gfx.new_simple_shader(shaders::COLOR_3D_VERT, shaders::FLAT_COLOR_FRAG)?;
 
@@ -92,38 +92,6 @@ impl UiView {
 
 
 
-pub struct UiMesh {
-	vertices: Vec<(Vec3, Color)>,
-	indices: Vec<u16>,
-}
-
-
-impl UiMesh {
-	pub fn from_entity(entity: toy::EntityRef<'_>) -> UiMesh {
-		let raw_mesh = entity.mesh_data().unwrap();
-		let colors = &raw_mesh.color_data(None).unwrap().data;
-		UiMesh {
-			vertices: raw_mesh.positions.iter().cloned()
-				.zip(colors.iter().cloned().map(Color::from))
-				.collect(),
-
-			indices: raw_mesh.indices.clone(),
-		}
-	}
-
-	pub fn build_into(&self, mesh_data: &mut gfx::MeshData<gfx::ColorVertex>, transform: Mat3x4) {
-		let vertices = self.vertices.iter()
-			.map(move |&(pos, color)| gfx::ColorVertex::new(transform * pos, color));
-
-		mesh_data.extend(
-			vertices,
-			self.indices.iter().cloned()
-		);
-	}
-}
-
-
-
 
 
 struct MapView {
@@ -133,10 +101,10 @@ struct MapView {
 
 	usable_area: Vec2,
 
-	bg_uimesh: UiMesh,
-	island_uimesh: UiMesh,
-	rocks_uimesh: UiMesh,
-	player_uimesh: UiMesh,
+	bg_uimesh: BasicMesh,
+	island_uimesh: BasicMesh,
+	rocks_uimesh: BasicMesh,
+	player_uimesh: BasicMesh,
 }
 
 impl MapView {
@@ -145,10 +113,10 @@ impl MapView {
 
 		let usable_area = ui_scene.find_entity("REF_usable_area").unwrap().scale.to_xy();
 
-		let bg_uimesh = UiMesh::from_entity(ui_scene.find_entity("MapBg").unwrap());
-		let island_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_island").unwrap());
-		let rocks_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_rocks").unwrap());
-		let player_uimesh = UiMesh::from_entity(ui_scene.find_entity("ICON_player").unwrap());
+		let bg_uimesh = BasicMesh::from_entity(ui_scene.find_entity("MapBg").unwrap());
+		let island_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_island").unwrap());
+		let rocks_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_rocks").unwrap());
+		let player_uimesh = BasicMesh::from_entity(ui_scene.find_entity("ICON_player").unwrap());
 
 		Ok(MapView {
 			shader,
@@ -186,6 +154,7 @@ impl MapView {
 
 			let uimesh = match object.ty {
 				MapObjectType::SmallIsland => &self.island_uimesh,
+				MapObjectType::Rocks2 => &self.rocks_uimesh,
 				_ => continue,
 			};
 
