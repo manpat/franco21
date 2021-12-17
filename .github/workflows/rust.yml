@@ -1,10 +1,6 @@
 name: Franco
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -26,16 +22,16 @@ jobs:
         override: true
         
     - name: Build
-      run: cargo build --verbose --release
-
-    - name: Package
-      uses: papeloto/action-zip@v1
-      with:
-        files: franco/assets/ target/release/franco.exe
-        dest: franco-find-your-friends-sim-2022-goty-edition.zip
+      run: cargo build --release
+      
+    - name: Prepare Upload
+      run: |
+        mkdir build
+        cp target/release/franco.exe build/
+        cp -r franco/assets build/
         
     - name: Upload
       uses: actions/upload-artifact@v2
       with:
         name: franco-find-your-friends-sim-2022-goty-edition
-        path: franco-find-your-friends-sim-2022-goty-edition.zip
+        path: build/
