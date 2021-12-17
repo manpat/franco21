@@ -1,0 +1,44 @@
+name: Franco
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        target: x86_64-pc-windows-msvc
+        profile: minimal
+        override: true
+        
+    - name: Build
+      run: cargo build --verbose --release
+      
+    - name: Run tests
+      run: cargo test --verbose
+
+    - name: Package
+      uses: papeloto/action-zip@v1
+      with:
+        files: franco/assets/ target/release/franco.exe
+        dest: franco-find-your-friends-sim-2022-goty-edition.zip
+        
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: franco-find-your-friends-sim-2022-goty-edition
+        path: franco-find-your-friends-sim-2022-goty-edition.zip
